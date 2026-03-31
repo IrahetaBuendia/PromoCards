@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.fedecredito.com.sv)",
+      "WebFetch(domain:www.bancoagricola.com)",
+      "WebFetch(domain:www.baccredomatic.com)",
+      "WebFetch(domain:www.credicomer.com.sv)",
+      "WebFetch(domain:www.credisiman.com)",
+      "WebFetch(domain:www.corporacionbi.com)"
+    ]
+  }
+}
