@@ -18,26 +18,43 @@ export async function bancoIndustrialScraper(): Promise<void> {
   try {
     const page = await browser.newPage();
     await page.goto(URL, { waitUntil: "networkidle", timeout: 30_000 });
-    await page.waitForTimeout(2_000);
 
-    // Banco Industrial usa WordPress + WPBakery
-    // Selectores en orden de prioridad: clases propias → WPBakery → genérico
+    // WordPress con WPBakery — las tarjetas están en .content-promociones > .vc_col-sm-4
+    await page.waitForSelector(".content-promociones .vc_col-sm-4", { timeout: 15_000 });
+
+    // Scroll para activar lazy loading
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(1_500);
+
     const rawPromos: RawPromo[] = await page
-      .$$eval(
-        ".content-promociones .vc_column-inner, .wpb_wrapper article, .promocion-item, article",
-        (cards) =>
-          cards
-            .filter((card) => (card.textContent ?? "").length > 20)
-            .map((card) => ({
-              title:
-                card.querySelector("h2, h3, h4, .wpb_heading")?.textContent?.trim() ?? "",
-              description: card.querySelector("p, .wpb_wrapper p")?.textContent?.trim() ?? null,
-              imageUrl:
-                (card.querySelector(".wpb_single_image img, img") as HTMLImageElement)?.src ??
-                null,
-              sourceUrl: (card.querySelector("a") as HTMLAnchorElement)?.href ?? URL,
-              rawText: card.textContent ?? "",
-            }))
+      .$$eval(".content-promociones .vc_col-sm-4", (cards) =>
+        cards.map((card) => {
+          const imgEl = card.querySelector("img") as HTMLImageElement | null;
+          // Imagen lazy: usar data-lazy-src si src es placeholder SVG
+          const imageUrl =
+            imgEl?.getAttribute("data-lazy-src") ??
+            (imgEl?.src && !imgEl.src.startsWith("data:") ? imgEl.src : null);
+
+          const title = card.querySelector("h2")?.textContent?.trim() ?? "";
+          // Capturar TODOS los párrafos para tener descripción completa con condiciones
+          const allPs = Array.from(card.querySelectorAll("p"))
+            .map((p) => p.textContent?.trim())
+            .filter(Boolean)
+            .join(" ");
+          const description = allPs || card.querySelector("p")?.textContent?.trim() || null;
+          // SIEMPRE usar slug — los links de WordPress BI usan href="#" (todos iguales)
+          // lo que causaba que la deduplicación descartara promos con el mismo href
+          const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 60);
+          const sourceUrl = `https://www.corporacionbi.com/sv/bancoindustrialsv/promociones#${slug}`;
+
+          return {
+            title,
+            description,
+            imageUrl,
+            sourceUrl,
+            rawText: card.textContent ?? "",
+          };
+        })
       )
       .then((items) =>
         items
@@ -67,7 +84,6 @@ export async function bancoIndustrialScraper(): Promise<void> {
       errorMessage: null,
       startedAt,
     });
-
     console.log(`[${BANK_ID}] ${rawPromos.length} promos guardadas`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

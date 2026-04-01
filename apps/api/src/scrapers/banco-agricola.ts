@@ -17,32 +17,40 @@ export async function bancoAgricolaScraper(): Promise<void> {
 
   try {
     const page = await browser.newPage();
-    await page.goto(URL, { waitUntil: "networkidle", timeout: 30_000 });
-
+    await page.goto(URL, { waitUntil: "load", timeout: 45_000 });
     await page.waitForSelector(".promos-mes-item", { timeout: 15_000 });
 
     const rawPromos: RawPromo[] = await page
       .$$eval(".promos-mes-item", (cards) =>
-        cards.map((card) => ({
-          title:
-            card.querySelector(".promos-mes-titulo-promo")?.textContent?.trim() ??
-            card.querySelector("h3, h4")?.textContent?.trim() ??
-            "",
-          description: card.querySelector("p")?.textContent?.trim() ?? null,
-          imageUrl:
-            (card.querySelector(".promos-mes-item-imagen img") as HTMLImageElement)?.src ??
-            (card.querySelector("img") as HTMLImageElement)?.src ??
-            null,
-          sourceUrl:
-            (card.querySelector("a") as HTMLAnchorElement)?.href ?? URL,
-          rawText: card.textContent ?? "",
-        }))
+        cards.map((card) => {
+          const store = card.querySelector("label.promos-mes-comercio")?.textContent?.trim() ?? "";
+          const title = card.querySelector("label.promos-mes-titulo-promo")?.textContent?.trim() ?? "";
+          const description = card.querySelector("p.promos-mes-descripcion")?.textContent?.trim() ?? null;
+          const verMas = card.querySelector("a.ver-mas");
+          const promoId = verMas?.getAttribute("id2") ?? verMas?.getAttribute("id") ?? "";
+          const imgEl = card.querySelector(".promos-mes-item-imagen img") as HTMLImageElement | null;
+          const imageUrl = imgEl?.src && !imgEl.src.startsWith("data:") ? imgEl.src : null;
+
+          // Si hay store y título, combinarlos para contexto completo
+          const displayTitle = store && title
+            ? `${store} — ${title}`
+            : title || store;
+
+          return {
+            store,
+            title: displayTitle,
+            description,
+            imageUrl,
+            sourceUrl: promoId ? `${location.href}#${promoId}` : location.href,
+            rawText: card.textContent ?? "",
+          };
+        })
       )
       .then((items) =>
         items
           .filter((item) => item.title.length > 0)
           .map((item) => {
-            const combined = `${item.title} ${item.description ?? ""}`;
+            const combined = `${item.store} ${item.title} ${item.description ?? ""}`;
             return {
               bankId: BANK_ID,
               title: item.title,
@@ -66,7 +74,6 @@ export async function bancoAgricolaScraper(): Promise<void> {
       errorMessage: null,
       startedAt,
     });
-
     console.log(`[${BANK_ID}] ${rawPromos.length} promos guardadas`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

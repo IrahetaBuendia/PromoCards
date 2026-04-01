@@ -28,26 +28,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build shared types
+        run: pnpm turbo build --filter=@promocards/types
+
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
           working-directory: apps/web
           vercel-args: --prod
-
-  deploy-api:
-    name: Deploy backend → Railway
-    runs-on: ubuntu-latest
-    environment: production
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy to Railway
-        uses: bervProject/railway-deploy@v1.4.0
-        with:
-          railway-token: ${{ secrets.RAILWAY_TOKEN }}
-          service: api

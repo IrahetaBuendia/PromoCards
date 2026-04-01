@@ -1,20 +1,24 @@
-import { Router } from "express";
+import { Router, type IRouter } from "express";
 import { createClient } from "@supabase/supabase-js";
 import { CATEGORY_ORDER } from "@promocards/types";
 import type { CategoryId } from "@promocards/types";
 
-export const promosRouter = Router();
+export const promosRouter: IRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSupabase(): ReturnType<typeof createClient<any>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return createClient<any>(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // GET /api/promos — lista de promos activas, ordenadas por categoría
 promosRouter.get("/", async (req, res) => {
   const { category, bank } = req.query;
 
-  let query = supabase
+  let query = getSupabase()
     .from("promos")
     .select("*")
     .eq("is_active", true)
@@ -51,18 +55,18 @@ promosRouter.get("/metrics", async (_req, res) => {
 
   const [{ count: total }, { data: bestDiscount }, { count: expiringThisWeek }] =
     await Promise.all([
-      supabase
+      getSupabase()
         .from("promos")
         .select("*", { count: "exact", head: true })
         .eq("is_active", true),
-      supabase
+      getSupabase()
         .from("promos")
         .select("discount_value")
         .eq("is_active", true)
         .eq("discount_type", "percentage")
         .order("discount_value", { ascending: false })
         .limit(1),
-      supabase
+      getSupabase()
         .from("promos")
         .select("*", { count: "exact", head: true })
         .eq("is_active", true)

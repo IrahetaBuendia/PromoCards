@@ -1,20 +1,47 @@
-import { Router } from "express";
+import { Router, type Request, type Response, type NextFunction, type IRouter } from "express";
 import { createClient } from "@supabase/supabase-js";
 import { runScraper, runAllScrapers } from "../scrapers";
 import type { BankId } from "@promocards/types";
 
-export const adminRouter = Router();
+export const adminRouter: IRouter = Router();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getSupabase(): ReturnType<typeof createClient<any>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return createClient<any>(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
-// TODO: middleware de autenticación/autorización (rol admin o editor)
+// ─── Middleware de autenticación ─────────────────────────────────────────────
+// Verifica el JWT de Supabase enviado en el header Authorization: Bearer <token>
+async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "No autorizado: token requerido." });
+    return;
+  }
+
+  const token = authHeader.replace("Bearer ", "").trim();
+
+  const { data: { user }, error } = await getSupabase().auth.getUser(token);
+
+  if (error || !user) {
+    res.status(401).json({ error: "No autorizado: token inválido o expirado." });
+    return;
+  }
+
+  next();
+}
+
+// Aplicar middleware a todas las rutas admin
+adminRouter.use(requireAuth);
 
 // GET /api/admin/scraper-runs — historial de ejecuciones
 adminRouter.get("/scraper-runs", async (_req, res) => {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("scraper_runs")
     .select("*")
     .order("started_at", { ascending: false })
@@ -46,6 +73,28 @@ adminRouter.post("/scrape", async (req, res) => {
   }
 });
 
+// GET /api/admin/promos — todas las promos (activas e inactivas) para moderación
+adminRouter.get("/promos", async (req, res) => {
+  const { bank } = req.query;
+
+  let query = getSupabase()
+    .from("promos")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  if (typeof bank === "string") {
+    query = query.eq("bank_id", bank);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    res.status(500).json({ error: error.message });
+    return;
+  }
+  res.json(data ?? []);
+});
+
 // PATCH /api/admin/promos/:id — moderar una promo (categoría, título, estado)
 adminRouter.patch("/promos/:id", async (req, res) => {
   const { id } = req.params;
@@ -62,7 +111,7 @@ adminRouter.patch("/promos/:id", async (req, res) => {
   if (description !== undefined) updates.description = description;
   if (isActive !== undefined) updates.is_active = isActive;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("promos")
     .update(updates)
     .eq("id", id)

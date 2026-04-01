@@ -1,3 +1,7 @@
+import dotenv from "dotenv";
+import { join } from "path";
+dotenv.config({ path: join(process.cwd(), "../../.env") });
+
 import express from "express";
 import cors from "cors";
 import { promosRouter } from "./routes/promos";

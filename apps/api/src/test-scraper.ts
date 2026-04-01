@@ -1,3 +1,10 @@
-import { fedecreditoScraper } from "./scrapers/fedecredito";
+import dotenv from "dotenv";
+import { join } from "path";
+dotenv.config({ path: join(process.cwd(), "../../.env") });
 
-fedecreditoScraper().then(() => process.exit(0));
+import { runAllScrapers } from "./scrapers";
+
+runAllScrapers().then(() => {
+  console.log("✓ Todos los scrapers completados");
+  process.exit(0);
+});

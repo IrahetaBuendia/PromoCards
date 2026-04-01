@@ -18,26 +18,41 @@ export async function bacCredomaticScraper(): Promise<void> {
   try {
     const page = await browser.newPage();
     await page.goto(URL, { waitUntil: "networkidle", timeout: 30_000 });
-
-    // BAC usa .promotion-card como contenedor principal
-    await page.waitForSelector(".promotion-card", { timeout: 15_000 });
+    await page.waitForSelector(".real-estate-card", { timeout: 15_000 });
 
     const rawPromos: RawPromo[] = await page
-      .$$eval(".promotion-card", (cards) =>
-        cards.map((card) => ({
-          title: card.querySelector(".promotion-title")?.textContent?.trim() ?? "",
-          description:
-            card.querySelector(".promotion-description")?.textContent?.trim() ?? null,
-          validityText:
-            card.querySelector(".promotion-validity")?.textContent?.trim() ?? "",
-          imageUrl: (card.querySelector(".promotion-image") as HTMLImageElement)?.src ?? null,
-          sourceUrl: (card.querySelector("a") as HTMLAnchorElement)?.href ?? URL,
-          rawText: card.textContent ?? "",
-        }))
+      .$$eval(".promotion-wrapper-item", (wrappers) =>
+        wrappers.map((wrapper) => {
+          const card = wrapper.querySelector(".real-estate-card");
+          if (!card) return null;
+
+          // ID del wrapper: "item-274631" → ancla "#274631"
+          const wrapperId = wrapper.className.match(/item-(\d+)/)?.[1] ?? "";
+
+          const imgEl = card.querySelector("img") as HTMLImageElement | null;
+          const title = card.querySelector("h2.h2")?.textContent?.trim() ?? "";
+          const validityText = card.querySelector("p.red-background-text")?.textContent?.trim() ?? "";
+
+          // Descripción: todos los <p> sin clase
+          const descParagraphs = Array.from(card.querySelectorAll("p:not([class])"))
+            .map((p) => p.textContent?.trim())
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+
+          return {
+            title,
+            description: descParagraphs || null,
+            validityText,
+            imageUrl: imgEl?.src && !imgEl.src.startsWith("data:") ? imgEl.src : null,
+            sourceUrl: wrapperId ? `${location.href}#${wrapperId}` : location.href,
+            rawText: wrapper.textContent ?? "",
+          };
+        })
       )
       .then((items) =>
         items
-          .filter((item) => item.title.length > 0)
+          .filter((item): item is NonNullable<typeof item> => item !== null && item.title.length > 0)
           .map((item) => {
             const combined = `${item.title} ${item.description ?? ""}`;
             return {
@@ -47,9 +62,7 @@ export async function bacCredomaticScraper(): Promise<void> {
               categoryId: detectCategory(combined),
               discountType: detectDiscountType(combined),
               discountValue: extractDiscountValue(combined),
-              expiresAt:
-                parseSpanishDate(item.validityText) ??
-                parseSpanishDate(item.rawText),
+              expiresAt: parseSpanishDate(item.validityText) ?? parseSpanishDate(item.rawText),
               imageUrl: item.imageUrl,
               sourceUrl: item.sourceUrl,
             } satisfies RawPromo;
@@ -65,7 +78,6 @@ export async function bacCredomaticScraper(): Promise<void> {
       errorMessage: null,
       startedAt,
     });
-
     console.log(`[${BANK_ID}] ${rawPromos.length} promos guardadas`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

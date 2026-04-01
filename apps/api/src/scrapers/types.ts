@@ -20,54 +20,52 @@ export interface RawPromo {
 /**
  * Palabras clave para clasificar una promo en su categoría.
  * El orden importa: se evalúa de arriba hacia abajo y se usa el primero que hace match.
+ * IMPORTANTE: streaming va antes de gasolina para evitar que "Disney+" caiga en gasolina.
  */
 export const CATEGORY_KEYWORDS: Array<{ categoryId: CategoryId; keywords: string[] }> = [
   {
+    // Streaming primero — evita que promos de Netflix/Disney caigan en gasolina
+    categoryId: "streaming",
+    keywords: [
+      "netflix", "disney+", "disney plus", "disney", "hbo max", "hbo",
+      "amazon prime", "prime video", "spotify", "youtube premium", "youtube",
+      "streaming", "paramount", "apple tv", "entretenimiento digital",
+      "plataforma digital", "plataformas de streaming",
+      "plataformas de entretenimiento", "suscripcion digital", "suscripción digital",
+    ],
+  },
+  {
     categoryId: "gasolina",
-    keywords: ["gasolina", "gas", "combustible", "shell", "texaco", "puma", "uno", "tanque"],
+    keywords: [
+      "gasolina", "gasolinera", "gasolineras", "combustible",
+      "shell", "texaco", "puma energy", "puma pris",
+      "estacion de servicio", "estación de servicio",
+    ],
   },
   {
     categoryId: "supermercados",
     keywords: [
-      "super selectos",
-      "walmart",
-      "supermercado",
-      "despensa",
+      "super selectos", "súper selectos",
+      "walmart", "supermercado", "supermercados",
+      "despensa de don juan", "maxi despensa",
       "la colonia",
-      "maxi despensa",
-      "súper",
-      "super ",
     ],
   },
   {
     categoryId: "farmacias",
     keywords: [
-      "farmacia",
-      "farmacias",
-      "similares",
-      "ahorro",
-      "san nicolás",
-      "droguería",
-      "medicamento",
+      "farmacia", "farmacias", "similares",
+      "san nicolás", "san nicolas", "farmacia san",
+      "droguería", "droguerías", "medicamento",
     ],
   },
   {
     categoryId: "restaurantes",
     keywords: [
-      "restaurante",
-      "restaurant",
-      "pizza",
-      "burger",
-      "pollo",
-      "comida",
-      "food",
-      "café",
-      "cafe",
-      "sushi",
-      "pizza",
-      "wendy",
-      "mcdonald",
-      "subway",
+      "restaurante", "restaurant", "pizza", "burger", "pollo campero",
+      "comida", "food", "café", "cafe", "sushi",
+      "wendy", "mcdonald", "subway", "delivery", "pedidosya",
+      "domino", "little caesars",
     ],
   },
 ];

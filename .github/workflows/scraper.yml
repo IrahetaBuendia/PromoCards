@@ -1,0 +1,48 @@
+name: Scrapers
+
+on:
+  # Corre automáticamente cada 4 horas
+  schedule:
+    - cron: "0 */4 * * *"
+
+  # Permite dispararlo manualmente desde el panel admin o desde GitHub UI
+  workflow_dispatch:
+    inputs:
+      bank_id:
+        description: "Banco específico a scrapear (dejar vacío para todos)"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  scrape:
+    name: Correr scrapers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      # ubuntu-latest tiene todas las dependencias de sistema para Chromium
+      - name: Instalar Chromium (Playwright)
+        run: pnpm --filter @promocards/api exec playwright install --with-deps chromium
+
+      - name: Correr scrapers
+        run: pnpm --filter @promocards/api exec tsx src/scrape.ts ${{ inputs.bank_id }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
