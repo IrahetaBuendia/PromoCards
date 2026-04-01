@@ -8,7 +8,6 @@ jobs:
   deploy-web:
     name: Deploy frontend → Vercel
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
       - name: Checkout
