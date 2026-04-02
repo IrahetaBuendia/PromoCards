@@ -82,9 +82,6 @@ export async function bancoIndustrialScraper(): Promise<void> {
           })
       );
 
-    console.log(`[${BANK_ID}] Promos encontradas:`);
-    rawPromos.forEach((p) => console.log(`  - [${p.categoryId}] ${p.title} → ${p.sourceUrl}`));
-
     await savePromos(rawPromos);
     await logScraperRun({
       bankId: BANK_ID,
