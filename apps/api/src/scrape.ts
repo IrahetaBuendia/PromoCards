@@ -14,6 +14,7 @@ import { join } from "path";
 dotenv.config({ path: join(process.cwd(), "../../.env") });
 
 import { runAllScrapers, runScraper } from "./scrapers";
+import { deleteAllPromos } from "./lib/db";
 import type { BankId } from "@promocards/types";
 
 // Acepta el banco como argumento CLI o como variable de entorno
@@ -25,6 +26,8 @@ async function main() {
     await runScraper(bankId);
     console.log(`[scrape] ✓ ${bankId} completado`);
   } else {
+    console.log("[scrape] Limpiando tabla de promos…");
+    await deleteAllPromos();
     console.log("[scrape] Iniciando todos los scrapers…");
     await runAllScrapers();
     console.log("[scrape] ✓ Todos los scrapers completados");

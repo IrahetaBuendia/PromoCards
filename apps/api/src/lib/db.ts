@@ -19,33 +19,26 @@ function getSupabase(): ReturnType<typeof createClient<any>> {
   return _supabase;
 }
 
+export async function deleteAllPromos(): Promise<void> {
+  const { error } = await getSupabase()
+    .from("promos")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000"); // condición siempre verdadera
+  if (error) console.warn(`[db] No se pudo limpiar la tabla: ${error.message}`);
+  else console.log("[db] Tabla promos limpiada");
+}
+
 export async function savePromos(promos: RawPromo[]): Promise<void> {
   if (promos.length === 0) return;
 
-  // Deduplicar por (bank_id, source_url) antes del upsert
+  // Deduplicar por título (case-insensitive) dentro del mismo banco
   const seen = new Map<string, RawPromo>();
   for (const p of promos) {
-    const key = `${p.bankId}::${p.sourceUrl}`;
+    const key = `${p.bankId}::${p.title.toLowerCase().trim()}`;
     if (!seen.has(key)) seen.set(key, p);
   }
   const unique = Array.from(seen.values());
 
-  // Obtener los bankIds únicos de este batch
-  const bankIds = [...new Set(unique.map((p) => p.bankId))];
-
-  // Paso 1: eliminar TODAS las promos anteriores del banco.
-  // Cada scrape es la fuente de verdad — lo que no aparece hoy, no existe.
-  for (const bankId of bankIds) {
-    const { error: deleteError } = await getSupabase()
-      .from("promos")
-      .delete()
-      .eq("bank_id", bankId);
-    if (deleteError) {
-      console.warn(`[db] No se pudo eliminar promos de ${bankId}: ${deleteError.message}`);
-    }
-  }
-
-  // Paso 2: insertar las promos frescas del scrape
   const { error } = await getSupabase().from("promos").insert(
     unique.map((p) => ({
       bank_id: p.bankId,
