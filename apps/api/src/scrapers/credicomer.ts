@@ -50,10 +50,13 @@ export async function credicomerScraper(): Promise<void> {
       }
     });
 
-    await page.goto(URL, { waitUntil: "networkidle", timeout: 30_000 });
+    await page.goto(URL, { waitUntil: "networkidle", timeout: 60_000 });
 
     // Esperar que carguen las imágenes de promos como señal de que el SPA terminó
-    await page.waitForSelector("img[src*='/api/promotions/']", { timeout: 15_000 });
+    await page.waitForSelector("img[src*='/api/promotions/']", { timeout: 20_000 });
+
+    // Dar tiempo extra para que todas las llamadas al API interno terminen
+    await page.waitForTimeout(3_000);
 
     // Si el API interno nos dio datos, usarlos directamente
     if (apiPromos.length > 0) {
@@ -127,36 +130,42 @@ export async function credicomerScraper(): Promise<void> {
     console.log(`[${BANK_ID}] API no capturada, usando scraping DOM como fallback`);
 
     const rawPromos: RawPromo[] = await page
-      .$$eval(".card", (cards) =>
-        cards
-          .filter((card) => card.querySelector("img[src*='/api/promotions/']") !== null)
-          .map((card) => {
-            const imgEl = card.querySelector("img") as HTMLImageElement | null;
-            const imgSrc = imgEl?.src ?? "";
-            const imgAlt = imgEl?.alt ?? "";
-            const promoId = imgSrc.match(/\/api\/promotions\/(\d+)\//)?.[1] ?? "";
-            const bodyDivs = Array.from(card.querySelectorAll("div div"));
-            const title =
-              bodyDivs.find((d) => d.className.includes("text-lg"))?.textContent?.trim() ?? "";
-            const description =
-              bodyDivs.find((d) => d.className.includes("text-sm"))?.textContent?.trim() ?? null;
-            return {
-              title,
-              description,
-              imgAlt,
-              imageUrl: imgSrc || null,
-              sourceUrl: promoId
-                ? `https://www.credicomer.com.sv/personas/promociones/${promoId}`
-                : "https://www.credicomer.com.sv/personas/promociones",
-              rawText: card.textContent ?? "",
-            };
-          })
+      .$$eval("img[src*='/api/promotions/']", (imgs) =>
+        imgs.map((img) => {
+          const imgEl = img as HTMLImageElement;
+          const imgSrc = imgEl.src ?? "";
+          const imgAlt = imgEl.alt ?? "";
+          const promoId = imgSrc.match(/\/api\/promotions\/(\d+)\//)?.[1] ?? "";
+          // Subir al contenedor de la card para extraer texto
+          const card = imgEl.closest("[class*='card'], article, li, div[class*='promo']") ?? imgEl.parentElement?.parentElement;
+          const rawText = card?.textContent ?? "";
+          // Buscar título en elementos de texto del card; si no hay, usar el alt de la imagen
+          const textEls = card ? Array.from(card.querySelectorAll("p, span, h2, h3, h4, div")) : [];
+          const titleEl = textEls.find((el) =>
+            el.children.length === 0 && (el.textContent?.trim().length ?? 0) > 3
+          );
+          const title = titleEl?.textContent?.trim() || imgAlt || "";
+          const description = textEls
+            .filter((el) => el !== titleEl && el.children.length === 0 && (el.textContent?.trim().length ?? 0) > 3)
+            .map((el) => el.textContent?.trim())
+            .filter(Boolean)
+            .join(" ") || null;
+          return {
+            title,
+            description,
+            imgAlt,
+            imageUrl: imgSrc || null,
+            sourceUrl: promoId
+              ? `https://www.credicomer.com.sv/personas/promociones/${promoId}`
+              : "https://www.credicomer.com.sv/personas/promociones",
+            rawText,
+          };
+        })
       )
       .then((items) =>
         items
           .filter((item) => item.title.length > 0)
           .map((item) => {
-            // Incluir el alt de la imagen para detectar streaming services por logo
             const combined = `${item.title} ${item.description ?? ""} ${item.imgAlt}`;
             return {
               bankId: BANK_ID,
