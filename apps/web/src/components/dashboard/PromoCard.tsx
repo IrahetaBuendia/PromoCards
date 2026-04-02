@@ -87,17 +87,22 @@ export function PromoCard({ promo }: Props) {
           {promo.title}
         </h3>
 
-        {/* Footer: categoría + vencimiento */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-          <span className="text-xs text-gray-400 font-medium">
-            {categoryIcon} {categoryLabel}
-          </span>
-          {expiresDate ? (
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full
+        {/* Footer: banco + categoría + vencimiento */}
+        <div className="flex flex-col gap-1.5 pt-2 border-t border-gray-50">
+          <div className="flex items-center justify-between">
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${bank?.badge ?? "bg-gray-100 text-gray-600"}`}>
+              {bank?.name ?? promo.bankId}
+            </span>
+            <span className="text-xs text-gray-400 font-medium">
+              {categoryIcon} {categoryLabel}
+            </span>
+          </div>
+          {expiresDate && (
+            <span className={`self-end text-xs font-semibold px-2 py-0.5 rounded-full
               ${isExpiringSoon ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-500"}`}>
               {isExpiringSoon ? "⚠️ " : ""}Vence {expiresDate}
             </span>
-          ) : null}
+          )}
         </div>
       </div>
     </div>
