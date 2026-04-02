@@ -40,7 +40,12 @@ export async function bancoIndustrialScraper(): Promise<void> {
               imgEl?.getAttribute("data-lazy-src") ??
               (imgEl?.src && !imgEl.src.startsWith("data:") ? imgEl.src : null);
 
-            const title = card.querySelector("h2")?.textContent?.trim() ?? "";
+            const h2Title = card.querySelector("h2")?.textContent?.trim() ?? "";
+            const imgEl2 = card.querySelector("img") as HTMLImageElement | null;
+            // Fallback: usar alt de imagen limpiando guiones/underscores si no hay h2
+            const altTitle = (imgEl2?.getAttribute("alt") ?? imgEl2?.getAttribute("title") ?? "")
+              .replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+            const title = h2Title || altTitle;
             const allPs = Array.from(card.querySelectorAll("p"))
               .map((p) => p.textContent?.trim())
               .filter(Boolean)
