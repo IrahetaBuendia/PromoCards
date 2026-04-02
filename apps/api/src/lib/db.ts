@@ -39,6 +39,17 @@ export async function savePromos(promos: RawPromo[]): Promise<void> {
   }
   const unique = Array.from(seen.values());
 
+  // Borrar promos anteriores de cada banco incluido en este batch
+  const bankIds = [...new Set(unique.map((p) => p.bankId))];
+  for (const bankId of bankIds) {
+    const { error: deleteError } = await getSupabase()
+      .from("promos")
+      .delete()
+      .eq("bank_id", bankId);
+    if (deleteError) console.warn(`[db] No se pudo limpiar ${bankId}: ${deleteError.message}`);
+    else console.log(`[db] Promos de ${bankId} eliminadas`);
+  }
+
   const { error } = await getSupabase().from("promos").insert(
     unique.map((p) => ({
       bank_id: p.bankId,
