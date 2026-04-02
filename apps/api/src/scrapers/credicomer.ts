@@ -126,23 +126,43 @@ export async function credicomerScraper(): Promise<void> {
       return;
     }
 
-    // Fallback: usar el atributo alt de las imágenes como título (contiene el nombre real de la promo)
+    // Fallback: scraping del DOM
     console.log(`[${BANK_ID}] API no capturada, usando scraping DOM como fallback`);
+
+    // Loguear estructura HTML de la primera card para diagnóstico
+    const firstCardHtml = await page.$eval(
+      "img[src*='/api/promotions/']",
+      (img) => {
+        const card = img.closest("li, article, [class*='card']") ?? img.parentElement?.parentElement?.parentElement;
+        return card?.outerHTML?.slice(0, 800) ?? img.parentElement?.parentElement?.outerHTML?.slice(0, 800) ?? "NO CARD";
+      }
+    ).catch(() => "ERROR");
+    console.log(`[${BANK_ID}] HTML primera card:`, firstCardHtml);
 
     const rawPromos: RawPromo[] = await page
       .$$eval("img[src*='/api/promotions/']", (imgs) =>
         imgs.map((img) => {
           const imgEl = img as HTMLImageElement;
           const imgSrc = imgEl.src ?? "";
-          const imgAlt = imgEl.alt ?? "";
           const promoId = imgSrc.match(/\/api\/promotions\/(\d+)\//)?.[1] ?? "";
-          const card = imgEl.closest("[class*='card'], article, li") ?? imgEl.parentElement?.parentElement;
-          const rawText = card?.textContent ?? "";
-          // El alt de la imagen siempre contiene el nombre completo de la promo en Credicomer
-          const title = imgAlt.trim() || rawText.trim().slice(0, 80) || "";
+          // Subir hasta encontrar un contenedor con texto
+          let card: Element | null = imgEl.parentElement;
+          for (let i = 0; i < 5; i++) {
+            if (!card) break;
+            const text = card.textContent?.trim() ?? "";
+            if (text.length > 5) break;
+            card = card.parentElement;
+          }
+          const rawText = card?.textContent?.trim() ?? "";
+          // Buscar el primer elemento de texto hijo directo con contenido
+          const allText = card ? Array.from(card.querySelectorAll("*"))
+            .filter((el) => el.children.length === 0 && (el.textContent?.trim().length ?? 0) > 3)
+            .map((el) => el.textContent?.trim() ?? "") : [];
+          const title = allText[0] ?? rawText.slice(0, 100) ?? "";
+          const description = allText.slice(1).join(" ") || null;
           return {
             title,
-            imgAlt,
+            description,
             imageUrl: imgSrc || null,
             sourceUrl: promoId
               ? `https://www.credicomer.com.sv/personas/promociones/${promoId}`
@@ -153,13 +173,13 @@ export async function credicomerScraper(): Promise<void> {
       )
       .then((items) => {
         const filtered = items.filter((item) => item.title.length > 0);
-        console.log(`[${BANK_ID}] Fallback encontró ${filtered.length} promos:`, filtered.map((i) => i.title));
+        console.log(`[${BANK_ID}] Fallback encontró ${filtered.length} promos:`, JSON.stringify(filtered.map((i) => i.title)));
         return filtered.map((item) => {
-          const combined = `${item.title} ${item.imgAlt}`;
+          const combined = `${item.title} ${item.description ?? ""}`;
           return {
             bankId: BANK_ID,
             title: item.title,
-            description: null,
+            description: item.description,
             categoryId: detectCategory(combined),
             discountType: detectDiscountType(combined),
             discountValue: extractDiscountValue(combined),
