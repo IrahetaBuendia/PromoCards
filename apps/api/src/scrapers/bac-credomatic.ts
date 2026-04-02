@@ -9,7 +9,37 @@ import {
 import { savePromos, logScraperRun } from "../lib/db";
 
 const BANK_ID = "bac-credomatic" as const;
-const URL = "https://www.baccredomatic.com/es-sv/personas/promociones";
+const BASE_URL = "https://www.baccredomatic.com/es-sv/personas/promociones";
+const MAX_PAGES = 20; // límite de seguridad para evitar loops infinitos
+
+/** Extrae las promos visibles en la página actual */
+async function scrapePage(page: import("playwright").Page, pageUrl: string) {
+  return page.$$eval(".promotion-wrapper-item", (wrappers) =>
+    wrappers.map((wrapper) => {
+      const card = wrapper.querySelector(".real-estate-card");
+      if (!card) return null;
+
+      const wrapperId = wrapper.className.match(/item-(\d+)/)?.[1] ?? "";
+      const imgEl = card.querySelector("img") as HTMLImageElement | null;
+      const title = card.querySelector("h2.h2")?.textContent?.trim() ?? "";
+      const validityText = card.querySelector("p.red-background-text")?.textContent?.trim() ?? "";
+      const descParagraphs = Array.from(card.querySelectorAll("p:not([class])"))
+        .map((p) => p.textContent?.trim())
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
+      return {
+        title,
+        description: descParagraphs || null,
+        validityText,
+        imageUrl: imgEl?.src && !imgEl.src.startsWith("data:") ? imgEl.src : null,
+        sourceUrl: wrapperId ? `${location.origin}${location.pathname}#${wrapperId}` : location.href,
+        rawText: wrapper.textContent ?? "",
+      };
+    })
+  );
+}
 
 export async function bacCredomaticScraper(): Promise<void> {
   const startedAt = new Date().toISOString();
@@ -17,57 +47,49 @@ export async function bacCredomaticScraper(): Promise<void> {
 
   try {
     const page = await browser.newPage();
-    await page.goto(URL, { waitUntil: "networkidle", timeout: 30_000 });
-    await page.waitForSelector(".real-estate-card", { timeout: 15_000 });
+    const allRawItems: Array<{
+      title: string; description: string | null; validityText: string;
+      imageUrl: string | null; sourceUrl: string; rawText: string;
+    }> = [];
 
-    const rawPromos: RawPromo[] = await page
-      .$$eval(".promotion-wrapper-item", (wrappers) =>
-        wrappers.map((wrapper) => {
-          const card = wrapper.querySelector(".real-estate-card");
-          if (!card) return null;
+    let currentPage = 0;
 
-          // ID del wrapper: "item-274631" → ancla "#274631"
-          const wrapperId = wrapper.className.match(/item-(\d+)/)?.[1] ?? "";
+    while (currentPage < MAX_PAGES) {
+      const pageUrl = `${BASE_URL}?page=${currentPage}`;
+      console.log(`[${BANK_ID}] Scrapeando página ${currentPage}: ${pageUrl}`);
 
-          const imgEl = card.querySelector("img") as HTMLImageElement | null;
-          const title = card.querySelector("h2.h2")?.textContent?.trim() ?? "";
-          const validityText = card.querySelector("p.red-background-text")?.textContent?.trim() ?? "";
+      await page.goto(pageUrl, { waitUntil: "networkidle", timeout: 30_000 });
+      await page.waitForSelector(".real-estate-card", { timeout: 15_000 });
 
-          // Descripción: todos los <p> sin clase
-          const descParagraphs = Array.from(card.querySelectorAll("p:not([class])"))
-            .map((p) => p.textContent?.trim())
-            .filter(Boolean)
-            .join(" ")
-            .trim();
+      const items = await scrapePage(page, pageUrl);
+      const valid = items.filter((i): i is NonNullable<typeof i> => i !== null && i.title.length > 0);
+      allRawItems.push(...valid);
+      console.log(`[${BANK_ID}] Página ${currentPage}: ${valid.length} promos`);
 
-          return {
-            title,
-            description: descParagraphs || null,
-            validityText,
-            imageUrl: imgEl?.src && !imgEl.src.startsWith("data:") ? imgEl.src : null,
-            sourceUrl: wrapperId ? `${location.href}#${wrapperId}` : location.href,
-            rawText: wrapper.textContent ?? "",
-          };
-        })
-      )
-      .then((items) =>
-        items
-          .filter((item): item is NonNullable<typeof item> => item !== null && item.title.length > 0)
-          .map((item) => {
-            const combined = `${item.title} ${item.description ?? ""}`;
-            return {
-              bankId: BANK_ID,
-              title: item.title,
-              description: item.description,
-              categoryId: detectCategory(combined),
-              discountType: detectDiscountType(combined),
-              discountValue: extractDiscountValue(combined),
-              expiresAt: parseSpanishDate(item.validityText) ?? parseSpanishDate(item.rawText),
-              imageUrl: item.imageUrl,
-              sourceUrl: item.sourceUrl,
-            } satisfies RawPromo;
-          })
-      );
+      // Verificar si hay página siguiente
+      const hasNext = await page.$(".pager__link--next");
+      if (!hasNext) {
+        console.log(`[${BANK_ID}] No hay más páginas. Total: ${allRawItems.length} promos`);
+        break;
+      }
+
+      currentPage++;
+    }
+
+    const rawPromos: RawPromo[] = allRawItems.map((item) => {
+      const combined = `${item.title} ${item.description ?? ""}`;
+      return {
+        bankId: BANK_ID,
+        title: item.title,
+        description: item.description,
+        categoryId: detectCategory(combined),
+        discountType: detectDiscountType(combined),
+        discountValue: extractDiscountValue(combined),
+        expiresAt: parseSpanishDate(item.validityText) ?? parseSpanishDate(item.rawText),
+        imageUrl: item.imageUrl,
+        sourceUrl: item.sourceUrl,
+      } satisfies RawPromo;
+    });
 
     await savePromos(rawPromos);
     await logScraperRun({
