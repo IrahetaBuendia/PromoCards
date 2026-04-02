@@ -1,16 +1,16 @@
 import { Fuel, ShoppingCart, Pill, UtensilsCrossed, Tv, Package } from "lucide-react";
 import type { Promo, BankId, CategoryId } from "@promocards/types";
 
-const BANK_CONFIG: Record<BankId, { name: string; color: string; badgeBg: string; badgeText: string }> = {
-  "fedecredito":      { name: "Fedecrédito",     color: "#3b82f6", badgeBg: "#dbeafe", badgeText: "#1e40af" },
-  "banco-industrial": { name: "Banco Industrial", color: "#dc2626", badgeBg: "#fee2e2", badgeText: "#991b1b" },
-  "credicomer":       { name: "Credicomer",       color: "#f97316", badgeBg: "#ffedd5", badgeText: "#9a3412" },
-  "bac-credomatic":   { name: "BAC Credomatic",   color: "#16a34a", badgeBg: "#dcfce7", badgeText: "#14532d" },
-  "credisiman":       { name: "Credisiman",       color: "#9333ea", badgeBg: "#f3e8ff", badgeText: "#581c87" },
-  "banco-agricola":   { name: "Banco Agrícola",   color: "#0d9488", badgeBg: "#ccfbf1", badgeText: "#134e4a" },
+const BANK_CONFIG: Record<BankId, { name: string; color: string; headerText: string; badgeBg: string; badgeText: string }> = {
+  "fedecredito":      { name: "Fedecrédito",     color: "#31825b", headerText: "#ffffff", badgeBg: "#dcfce7", badgeText: "#14532d" },
+  "banco-industrial": { name: "Banco Industrial", color: "#023866", headerText: "#ffffff", badgeBg: "#dbeafe", badgeText: "#023866" },
+  "credicomer":       { name: "Credicomer",       color: "#14b8a6", headerText: "#ffffff", badgeBg: "#ccfbf1", badgeText: "#0f766e" },
+  "bac-credomatic":   { name: "BAC Credomatic",   color: "#dc2626", headerText: "#ffffff", badgeBg: "#fee2e2", badgeText: "#991b1b" },
+  "credisiman":       { name: "Credisiman",       color: "#0002b8", headerText: "#ffffff", badgeBg: "#e0e7ff", badgeText: "#0002b8" },
+  "banco-agricola":   { name: "Banco Agrícola",   color: "#facc00", headerText: "#713f12", badgeBg: "#fef9c3", badgeText: "#713f12" },
 };
 
-type CategoryIconComponent = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+type CategoryIconComponent = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string; style?: React.CSSProperties }>;
 
 const CATEGORY_ICON_COMPONENTS: Record<CategoryId, CategoryIconComponent> = {
   gasolina:      Fuel,
@@ -19,6 +19,16 @@ const CATEGORY_ICON_COMPONENTS: Record<CategoryId, CategoryIconComponent> = {
   restaurantes:  UtensilsCrossed,
   streaming:     Tv,
   otros:         Package,
+};
+
+// Fondo e ícono coloridos para el placeholder cuando no hay imagen
+const CATEGORY_PLACEHOLDER: Record<CategoryId, { bg: string; iconColor: string }> = {
+  gasolina:      { bg: "#fff7ed", iconColor: "#ea580c" },
+  supermercados: { bg: "#f0fdf4", iconColor: "#16a34a" },
+  farmacias:     { bg: "#eff6ff", iconColor: "#2563eb" },
+  restaurantes:  { bg: "#fff1f2", iconColor: "#e11d48" },
+  streaming:     { bg: "#faf5ff", iconColor: "#9333ea" },
+  otros:         { bg: "#f1f5f9", iconColor: "#64748b" },
 };
 
 const CATEGORY_LABELS: Record<CategoryId, string> = {
@@ -38,7 +48,9 @@ export function PromoCard({ promo }: Props) {
   const bank = BANK_CONFIG[promo.bankId];
   const CategoryIcon = CATEGORY_ICON_COMPONENTS[promo.categoryId] ?? Package;
   const categoryLabel = CATEGORY_LABELS[promo.categoryId] ?? "Otros";
+  const placeholder = CATEGORY_PLACEHOLDER[promo.categoryId] ?? CATEGORY_PLACEHOLDER.otros;
   const bankColor = bank?.color ?? "#9ca3af";
+  const bankHeaderText = bank?.headerText ?? "#ffffff";
 
   const expiresDate = promo.expiresAt
     ? new Date(promo.expiresAt).toLocaleDateString("es-SV", {
@@ -57,11 +69,11 @@ export function PromoCard({ promo }: Props) {
 
       {/* Cabecera banco — color sólido con nombre */}
       <div style={{ backgroundColor: bankColor }} className="px-3 py-2 flex items-center justify-between gap-2">
-        <span className="text-white text-xs font-extrabold tracking-wide uppercase truncate">
+        <span style={{ color: bankHeaderText }} className="text-xs font-extrabold tracking-wide uppercase truncate">
           {bank?.name ?? promo.bankId}
         </span>
         {promo.discountValue && (
-          <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-white/25 text-white border border-white/40 shrink-0">
+          <span style={{ color: bankHeaderText }} className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-black/10 border border-black/10 shrink-0">
             {promo.discountValue}
           </span>
         )}
@@ -77,8 +89,8 @@ export function PromoCard({ promo }: Props) {
           />
         </div>
       ) : (
-        <div className="h-36 flex items-center justify-center bg-gray-50">
-          <CategoryIcon size={48} strokeWidth={1} className="text-gray-300" />
+        <div className="h-36 flex items-center justify-center" style={{ backgroundColor: placeholder.bg }}>
+          <CategoryIcon size={52} strokeWidth={1.25} style={{ color: placeholder.iconColor }} />
         </div>
       )}
 

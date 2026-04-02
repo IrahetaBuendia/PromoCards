@@ -1,9 +1,9 @@
 name: Scrapers
 
 on:
-  # Corre automáticamente cada 4 horas
+  # 7am, 12pm y 6pm hora El Salvador (UTC-6) → 13:00, 18:00, 00:00 UTC
   schedule:
-    - cron: "0 */4 * * *"
+    - cron: "0 0,13,18 * * *"
 
   # Permite dispararlo manualmente desde el panel admin o desde GitHub UI
   workflow_dispatch:

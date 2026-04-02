@@ -55,8 +55,13 @@ export async function credicomerScraper(): Promise<void> {
     // Esperar que carguen las imágenes de promos como señal de que el SPA terminó
     await page.waitForSelector("img[src*='/api/promotions/']", { timeout: 20_000 });
 
+    // Hacer scroll para disparar lazy loading de todas las promos
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(1_500);
+    await page.evaluate(() => window.scrollTo(0, 0));
+
     // Dar tiempo extra para que todas las llamadas al API interno terminen
-    await page.waitForTimeout(3_000);
+    await page.waitForTimeout(4_000);
 
     // Si el API interno nos dio datos, usarlos directamente
     if (apiPromos.length > 0) {
@@ -65,13 +70,16 @@ export async function credicomerScraper(): Promise<void> {
       const rawPromos: RawPromo[] = apiPromos
         .filter((item) => {
           const title =
-            item.title ?? item.name ?? item.nombre ?? item.titulo ?? "";
+            item.title ?? item.name ?? item.nombre ?? item.titulo ??
+            item.promotion_name ?? item.heading ?? item.store ?? item.comercio ?? "";
           return typeof title === "string" && title.trim().length > 0;
         })
         .map((item): RawPromo => {
           // Adaptar a múltiples posibles estructuras del JSON de Credicomer
           const title =
-            (item.title ?? item.name ?? item.nombre ?? item.titulo ?? "").trim();
+            (item.title ?? item.name ?? item.nombre ?? item.titulo ??
+             item.promotion_name ?? item.heading ??
+             item.store ?? item.comercio ?? "").trim();
           const description =
             (item.description ?? item.descripcion ?? item.terms ?? item.conditions ?? null);
           const promoId = item.id ?? item.promotionId ?? "";
