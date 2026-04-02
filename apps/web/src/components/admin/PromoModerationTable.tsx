@@ -33,6 +33,16 @@ const ALL_BANKS: Array<{ value: string; label: string }> = [
   { value: "banco-agricola", label: "Banco Agrícola" },
 ];
 
+const ALL_CATEGORIES: Array<{ value: string; label: string }> = [
+  { value: "", label: "Todas las categorías" },
+  { value: "gasolina", label: "⛽ Gasolina" },
+  { value: "supermercados", label: "🛒 Supermercados" },
+  { value: "farmacias", label: "💊 Farmacias" },
+  { value: "restaurantes", label: "🍽️ Restaurantes" },
+  { value: "streaming", label: "🎬 Streaming" },
+  { value: "otros", label: "📦 Otros" },
+];
+
 interface Props {
   initialPromos: AdminPromo[];
 }
@@ -41,11 +51,13 @@ export function PromoModerationTable({ initialPromos }: Props) {
   const [promos, setPromos] = useState<AdminPromo[]>(initialPromos);
   const [editing, setEditing] = useState<AdminPromo | null>(null);
   const [filterBank, setFilterBank] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
   const [search, setSearch] = useState("");
 
   const filtered = promos.filter((p) => {
     if (filterBank && p.bank_id !== filterBank) return false;
+    if (filterCategory && p.category_id !== filterCategory) return false;
     if (filterStatus === "active" && !p.is_active) return false;
     if (filterStatus === "inactive" && p.is_active) return false;
     if (search) {
@@ -90,6 +102,17 @@ export function PromoModerationTable({ initialPromos }: Props) {
               {ALL_BANKS.map((b) => (
                 <option key={b.value} value={b.value}>
                   {b.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm outline-none focus:border-gray-400 focus:bg-white transition"
+            >
+              {ALL_CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
                 </option>
               ))}
             </select>
