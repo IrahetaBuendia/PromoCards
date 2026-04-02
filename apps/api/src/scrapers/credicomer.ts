@@ -27,22 +27,26 @@ export async function credicomerScraper(): Promise<void> {
 
     page.on("response", async (response) => {
       const url = response.url();
+      // Solo interceptar el endpoint de promos activas (evitar categories, banners, etc.)
       if (
-        url.includes("/api/promotions") &&
-        !url.includes("/image") &&
+        url.includes("/api/promotions/find-active") &&
         response.status() === 200
       ) {
         try {
           const contentType = response.headers()["content-type"] ?? "";
           if (contentType.includes("application/json")) {
             const json = await response.json();
+            // Credicomer envuelve el resultado en { message, errors, response: [...] }
             if (Array.isArray(json)) {
               apiPromos.push(...json);
+            } else if (Array.isArray(json?.response)) {
+              apiPromos.push(...json.response);
             } else if (Array.isArray(json?.data)) {
               apiPromos.push(...json.data);
             } else if (Array.isArray(json?.promotions)) {
               apiPromos.push(...json.promotions);
             }
+            console.log(`[${BANK_ID}] find-active capturado: ${apiPromos.length} items`);
           }
         } catch {
           // ignorar errores de parsing
@@ -88,9 +92,12 @@ export async function credicomerScraper(): Promise<void> {
             : null;
 
           // Texto para categorización: combinar todos los campos de texto disponibles
+          const categoryName =
+            item.idPromotionsCategory?.name ?? item.idPromotionsCategory?.description ?? "";
           const combined = [
             title,
             description ?? "",
+            categoryName,
             item.category ?? item.categoria ?? "",
             item.tags ?? "",
             item.store ?? item.comercio ?? "",

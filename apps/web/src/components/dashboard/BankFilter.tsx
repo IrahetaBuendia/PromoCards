@@ -3,15 +3,21 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import type { BankId } from "@promocards/types";
 
-// Orden de prioridad definido por el usuario
-const BANKS: Array<{ id: BankId | "todos"; label: string; short: string; color: string; active: string }> = [
-  { id: "todos",            label: "Todos los bancos", short: "Todos",    color: "border-gray-200 text-gray-600",         active: "bg-gray-900 text-white" },
-  { id: "credicomer",       label: "Credicomer",       short: "Credicomer",color: "border-orange-200 text-orange-700",    active: "bg-orange-500 text-white" },
-  { id: "banco-industrial", label: "Banco Industrial", short: "Industrial",color: "border-red-200 text-red-700",          active: "bg-red-600 text-white" },
-  { id: "fedecredito",      label: "Fedecrédito",      short: "Fedecrédito",color: "border-blue-200 text-blue-700",       active: "bg-blue-600 text-white" },
-  { id: "bac-credomatic",   label: "BAC Credomatic",   short: "BAC",      color: "border-green-200 text-green-700",       active: "bg-green-600 text-white" },
-  { id: "credisiman",       label: "Credisiman",       short: "Siman",    color: "border-purple-200 text-purple-700",     active: "bg-purple-600 text-white" },
-  { id: "banco-agricola",   label: "Banco Agrícola",   short: "Agrícola", color: "border-teal-200 text-teal-700",         active: "bg-teal-600 text-white" },
+const BANKS: Array<{
+  id: BankId | "todos";
+  label: string;
+  color: string;
+  textColor: string;
+  activeBg: string;
+  activeText: string;
+}> = [
+  { id: "todos",            label: "Todos los bancos", color: "#e5e7eb", textColor: "#374151", activeBg: "#111827", activeText: "#ffffff" },
+  { id: "credicomer",       label: "Credicomer",       color: "#ccfbf1", textColor: "#0f766e", activeBg: "#14b8a6", activeText: "#ffffff" },
+  { id: "banco-industrial", label: "Banco Industrial", color: "#dbeafe", textColor: "#023866", activeBg: "#023866", activeText: "#ffffff" },
+  { id: "fedecredito",      label: "Fedecrédito",      color: "#dcfce7", textColor: "#14532d", activeBg: "#31825b", activeText: "#ffffff" },
+  { id: "bac-credomatic",   label: "BAC Credomatic",   color: "#fee2e2", textColor: "#991b1b", activeBg: "#dc2626", activeText: "#ffffff" },
+  { id: "credisiman",       label: "Credisiman",       color: "#e0e7ff", textColor: "#0002b8", activeBg: "#0002b8", activeText: "#ffffff" },
+  { id: "banco-agricola",   label: "Banco Agrícola",   color: "#fef9c3", textColor: "#713f12", activeBg: "#facc00", activeText: "#713f12" },
 ];
 
 export function BankFilter({ vertical = false }: { vertical?: boolean }) {
@@ -30,17 +36,21 @@ export function BankFilter({ vertical = false }: { vertical?: boolean }) {
     <div className={vertical ? "flex flex-col gap-1" : "flex flex-wrap gap-2"}>
       {BANKS.map((bank) => {
         const isActive = active === bank.id;
+        const bg    = isActive ? bank.activeBg  : bank.color;
+        const color = isActive ? bank.activeText : bank.textColor;
+
         return (
           <button
             key={bank.id}
             onClick={() => handleSelect(bank.id)}
+            style={{ backgroundColor: bg, color }}
             className={`font-semibold transition-all duration-200
               ${vertical
-                ? `w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-left ${isActive ? `${bank.active} border-transparent` : `${bank.color} hover:bg-gray-50`}`
-                : `px-4 py-2 rounded-full text-sm border ${isActive ? `${bank.active} shadow-md scale-105 border-transparent` : `bg-white ${bank.color} hover:bg-gray-50`}`
+                ? "w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-left"
+                : `px-4 py-2 rounded-full text-sm border border-transparent ${isActive ? "shadow-md scale-105" : ""}`
               }`}
           >
-            {vertical ? bank.label : bank.short}
+            {vertical ? bank.label : bank.label}
           </button>
         );
       })}

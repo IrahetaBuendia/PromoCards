@@ -1,10 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { CategoryFilter } from "./CategoryFilter";
 import { BankFilter } from "./BankFilter";
 import { TodayFilter } from "./TodayFilter";
-import { Suspense } from "react";
+
+function AccordionSection({
+  title,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-t border-gray-100 first:border-t-0">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+      >
+        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{title}</span>
+        {open
+          ? <ChevronDown size={13} strokeWidth={2.5} className="text-gray-400" />
+          : <ChevronRight size={13} strokeWidth={2.5} className="text-gray-400" />
+        }
+      </button>
+      {open && <div className="px-4 pb-3">{children}</div>}
+    </div>
+  );
+}
 
 export function FilterSidebar() {
   const [open, setOpen] = useState(true);
@@ -13,8 +40,8 @@ export function FilterSidebar() {
     <div className="relative shrink-0 self-start sticky top-20">
       {open ? (
         <aside className="w-52 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          {/* Header del sidebar con botón cerrar */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Filtros</span>
             <button
               onClick={() => setOpen(false)}
@@ -27,26 +54,17 @@ export function FilterSidebar() {
             </button>
           </div>
 
-          <div className="p-4 space-y-5">
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Categoría</p>
-              <Suspense>
-                <CategoryFilter vertical />
-              </Suspense>
-            </div>
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Banco</p>
-              <Suspense>
-                <BankFilter vertical />
-              </Suspense>
-            </div>
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Fecha</p>
-              <Suspense>
-                <TodayFilter />
-              </Suspense>
-            </div>
-          </div>
+          <AccordionSection title="Categoría" defaultOpen>
+            <Suspense><CategoryFilter vertical /></Suspense>
+          </AccordionSection>
+
+          <AccordionSection title="Banco" defaultOpen>
+            <Suspense><BankFilter vertical /></Suspense>
+          </AccordionSection>
+
+          <AccordionSection title="Fecha" defaultOpen>
+            <Suspense><TodayFilter /></Suspense>
+          </AccordionSection>
         </aside>
       ) : (
         <button
