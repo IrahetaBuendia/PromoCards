@@ -17,8 +17,11 @@ export async function bancoAgricolaScraper(): Promise<void> {
 
   try {
     const page = await browser.newPage();
-    await page.goto(URL, { waitUntil: "load", timeout: 45_000 });
-    await page.waitForSelector(".promos-mes-item", { timeout: 15_000 });
+    await page.setExtraHTTPHeaders({
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    });
+    await page.goto(URL, { waitUntil: "domcontentloaded", timeout: 90_000 });
+    await page.waitForSelector(".promos-mes-item", { timeout: 30_000 });
 
     const rawPromos: RawPromo[] = await page
       .$$eval(".promos-mes-item", (cards) =>
