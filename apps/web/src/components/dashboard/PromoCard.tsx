@@ -1,12 +1,12 @@
 import type { Promo, BankId, CategoryId } from "@promocards/types";
 
-const BANK_CONFIG: Record<BankId, { name: string; color: string; border: string; badge: string }> = {
-  "fedecredito":      { name: "Fedecrédito",     color: "bg-blue-500",   border: "border-l-blue-500",   badge: "bg-blue-100 text-blue-800" },
-  "banco-industrial": { name: "Banco Industrial", color: "bg-red-600",    border: "border-l-red-600",    badge: "bg-red-100 text-red-800" },
-  "credicomer":       { name: "Credicomer",       color: "bg-orange-500", border: "border-l-orange-500", badge: "bg-orange-100 text-orange-800" },
-  "bac-credomatic":   { name: "BAC Credomatic",   color: "bg-green-600",  border: "border-l-green-600",  badge: "bg-green-100 text-green-800" },
-  "credisiman":       { name: "Credisiman",       color: "bg-purple-600", border: "border-l-purple-600", badge: "bg-purple-100 text-purple-800" },
-  "banco-agricola":   { name: "Banco Agrícola",   color: "bg-teal-600",   border: "border-l-teal-600",   badge: "bg-teal-100 text-teal-800" },
+const BANK_CONFIG: Record<BankId, { name: string; color: string; badgeBg: string; badgeText: string }> = {
+  "fedecredito":      { name: "Fedecrédito",     color: "#3b82f6", badgeBg: "#dbeafe", badgeText: "#1e40af" },
+  "banco-industrial": { name: "Banco Industrial", color: "#dc2626", badgeBg: "#fee2e2", badgeText: "#991b1b" },
+  "credicomer":       { name: "Credicomer",       color: "#f97316", badgeBg: "#ffedd5", badgeText: "#9a3412" },
+  "bac-credomatic":   { name: "BAC Credomatic",   color: "#16a34a", badgeBg: "#dcfce7", badgeText: "#14532d" },
+  "credisiman":       { name: "Credisiman",       color: "#9333ea", badgeBg: "#f3e8ff", badgeText: "#581c87" },
+  "banco-agricola":   { name: "Banco Agrícola",   color: "#0d9488", badgeBg: "#ccfbf1", badgeText: "#134e4a" },
 };
 
 const CATEGORY_ICONS: Record<CategoryId, string> = {
@@ -35,6 +35,7 @@ export function PromoCard({ promo }: Props) {
   const bank = BANK_CONFIG[promo.bankId];
   const categoryIcon = CATEGORY_ICONS[promo.categoryId] ?? "📦";
   const categoryLabel = CATEGORY_LABELS[promo.categoryId] ?? "Otros";
+  const bankColor = bank?.color ?? "#9ca3af";
 
   const expiresDate = promo.expiresAt
     ? new Date(promo.expiresAt).toLocaleDateString("es-SV", {
@@ -49,15 +50,15 @@ export function PromoCard({ promo }: Props) {
     : false;
 
   return (
-    <div className={`bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5`}>
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5">
 
-      {/* Cabecera del banco — franja de color con nombre */}
-      <div className={`${bank?.color ?? "bg-gray-400"} px-4 py-2 flex items-center justify-between`}>
-        <span className="text-white text-xs font-extrabold tracking-wide uppercase">
+      {/* Cabecera banco — color sólido con nombre */}
+      <div style={{ backgroundColor: bankColor }} className="px-3 py-2 flex items-center justify-between gap-2">
+        <span className="text-white text-xs font-extrabold tracking-wide uppercase truncate">
           {bank?.name ?? promo.bankId}
         </span>
         {promo.discountValue && (
-          <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
+          <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-white/25 text-white border border-white/40 shrink-0">
             {promo.discountValue}
           </span>
         )}
@@ -65,7 +66,7 @@ export function PromoCard({ promo }: Props) {
 
       {/* Imagen */}
       {promo.imageUrl ? (
-        <div className="h-40 overflow-hidden bg-gray-100">
+        <div className="h-36 overflow-hidden bg-gray-100">
           <img
             src={promo.imageUrl}
             alt={promo.title}
@@ -73,33 +74,29 @@ export function PromoCard({ promo }: Props) {
           />
         </div>
       ) : (
-        <div className="h-40 flex items-center justify-center"
-          style={{ background: `linear-gradient(135deg, #f8f9fa, #e9ecef)` }}>
-          <span className="text-5xl opacity-40">{categoryIcon}</span>
+        <div className="h-36 flex items-center justify-center bg-gray-50">
+          <span className="text-4xl opacity-30">{categoryIcon}</span>
         </div>
       )}
 
       {/* Contenido */}
-      <div className="p-4 flex flex-col flex-1 gap-2">
-
-        {/* Título */}
+      <div className="p-3 flex flex-col flex-1 gap-2">
         <h3 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-3 flex-1">
           {promo.title}
         </h3>
 
-        {/* Footer: banco + categoría + vencimiento */}
-        <div className="flex flex-col gap-1.5 pt-2 border-t border-gray-50">
-          <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${bank?.badge ?? "bg-gray-100 text-gray-600"}`}>
-              {bank?.name ?? promo.bankId}
-            </span>
-            <span className="text-xs text-gray-400 font-medium">
-              {categoryIcon} {categoryLabel}
-            </span>
-          </div>
+        {/* Footer: categoría + vencimiento */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-50 gap-1">
+          <span className="text-xs text-gray-400 font-medium shrink-0">
+            {categoryIcon} {categoryLabel}
+          </span>
           {expiresDate && (
-            <span className={`self-end text-xs font-semibold px-2 py-0.5 rounded-full
-              ${isExpiringSoon ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-500"}`}>
+            <span
+              className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
+              style={isExpiringSoon
+                ? { backgroundColor: "#fee2e2", color: "#dc2626" }
+                : { backgroundColor: "#f3f4f6", color: "#6b7280" }}
+            >
               {isExpiringSoon ? "⚠️ " : ""}Vence {expiresDate}
             </span>
           )}
