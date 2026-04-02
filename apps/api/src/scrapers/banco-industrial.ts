@@ -28,33 +28,35 @@ export async function bancoIndustrialScraper(): Promise<void> {
 
     const rawPromos: RawPromo[] = await page
       .$$eval(".content-promociones .vc_col-sm-4", (cards) =>
-        cards.map((card) => {
-          const imgEl = card.querySelector("img") as HTMLImageElement | null;
-          // Imagen lazy: usar data-lazy-src si src es placeholder SVG
-          const imageUrl =
-            imgEl?.getAttribute("data-lazy-src") ??
-            (imgEl?.src && !imgEl.src.startsWith("data:") ? imgEl.src : null);
+        cards
+          .filter((card) => {
+            // Solo cards visibles (excluir las ocultas con display:none)
+            const style = window.getComputedStyle(card);
+            return style.display !== "none" && style.visibility !== "hidden";
+          })
+          .map((card) => {
+            const imgEl = card.querySelector("img") as HTMLImageElement | null;
+            const imageUrl =
+              imgEl?.getAttribute("data-lazy-src") ??
+              (imgEl?.src && !imgEl.src.startsWith("data:") ? imgEl.src : null);
 
-          const title = card.querySelector("h2")?.textContent?.trim() ?? "";
-          // Capturar TODOS los párrafos para tener descripción completa con condiciones
-          const allPs = Array.from(card.querySelectorAll("p"))
-            .map((p) => p.textContent?.trim())
-            .filter(Boolean)
-            .join(" ");
-          const description = allPs || card.querySelector("p")?.textContent?.trim() || null;
-          // SIEMPRE usar slug — los links de WordPress BI usan href="#" (todos iguales)
-          // lo que causaba que la deduplicación descartara promos con el mismo href
-          const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 60);
-          const sourceUrl = `https://www.corporacionbi.com/sv/bancoindustrialsv/promociones#${slug}`;
+            const title = card.querySelector("h2")?.textContent?.trim() ?? "";
+            const allPs = Array.from(card.querySelectorAll("p"))
+              .map((p) => p.textContent?.trim())
+              .filter(Boolean)
+              .join(" ");
+            const description = allPs || card.querySelector("p")?.textContent?.trim() || null;
+            const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 60);
+            const sourceUrl = `https://www.corporacionbi.com/sv/bancoindustrialsv/promociones#${slug}`;
 
-          return {
-            title,
-            description,
-            imageUrl,
-            sourceUrl,
-            rawText: card.textContent ?? "",
-          };
-        })
+            return {
+              title,
+              description,
+              imageUrl,
+              sourceUrl,
+              rawText: card.textContent ?? "",
+            };
+          })
       )
       .then((items) =>
         items
