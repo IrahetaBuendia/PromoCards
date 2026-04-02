@@ -52,14 +52,11 @@ export function PromoModerationTable({ initialPromos }: Props) {
   const [editing, setEditing] = useState<AdminPromo | null>(null);
   const [filterBank, setFilterBank] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
   const [search, setSearch] = useState("");
 
   const filtered = promos.filter((p) => {
     if (filterBank && p.bank_id !== filterBank) return false;
     if (filterCategory && p.category_id !== filterCategory) return false;
-    if (filterStatus === "active" && !p.is_active) return false;
-    if (filterStatus === "inactive" && p.is_active) return false;
     if (search) {
       const q = search.toLowerCase();
       return p.title.toLowerCase().includes(q) || (p.description ?? "").toLowerCase().includes(q);
@@ -116,21 +113,6 @@ export function PromoModerationTable({ initialPromos }: Props) {
                 </option>
               ))}
             </select>
-            <div className="flex items-center rounded-xl border border-gray-200 overflow-hidden text-xs font-semibold">
-              {(["all", "active", "inactive"] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setFilterStatus(s)}
-                  className={`px-3 py-1.5 transition-colors ${
-                    filterStatus === s
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  {s === "all" ? "Todas" : s === "active" ? "Activas" : "Inactivas"}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -151,16 +133,12 @@ export function PromoModerationTable({ initialPromos }: Props) {
                 <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Descuento
                 </th>
-                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Estado
-                </th>
-                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400 text-sm">
+                  <td colSpan={4} className="px-6 py-12 text-center text-gray-400 text-sm">
                     No hay promociones que coincidan con los filtros.
                   </td>
                 </tr>
@@ -186,27 +164,6 @@ export function PromoModerationTable({ initialPromos }: Props) {
                       ) : (
                         <span className="text-gray-300">—</span>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {promo.is_active ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          Activa
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-gray-400 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                          Inactiva
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => setEditing(promo)}
-                        className="text-xs font-semibold text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        Editar
-                      </button>
                     </td>
                   </tr>
                 ))
