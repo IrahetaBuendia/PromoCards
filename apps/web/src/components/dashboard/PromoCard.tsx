@@ -1,3 +1,4 @@
+import { Fuel, ShoppingCart, Pill, UtensilsCrossed, Tv, Package } from "lucide-react";
 import type { Promo, BankId, CategoryId } from "@promocards/types";
 
 const BANK_CONFIG: Record<BankId, { name: string; color: string; badgeBg: string; badgeText: string }> = {
@@ -9,13 +10,15 @@ const BANK_CONFIG: Record<BankId, { name: string; color: string; badgeBg: string
   "banco-agricola":   { name: "Banco Agrícola",   color: "#0d9488", badgeBg: "#ccfbf1", badgeText: "#134e4a" },
 };
 
-const CATEGORY_ICONS: Record<CategoryId, string> = {
-  gasolina:      "⛽",
-  supermercados: "🛒",
-  farmacias:     "💊",
-  restaurantes:  "🍽️",
-  streaming:     "🎬",
-  otros:         "📦",
+type CategoryIconComponent = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+
+const CATEGORY_ICON_COMPONENTS: Record<CategoryId, CategoryIconComponent> = {
+  gasolina:      Fuel,
+  supermercados: ShoppingCart,
+  farmacias:     Pill,
+  restaurantes:  UtensilsCrossed,
+  streaming:     Tv,
+  otros:         Package,
 };
 
 const CATEGORY_LABELS: Record<CategoryId, string> = {
@@ -33,7 +36,7 @@ interface Props {
 
 export function PromoCard({ promo }: Props) {
   const bank = BANK_CONFIG[promo.bankId];
-  const categoryIcon = CATEGORY_ICONS[promo.categoryId] ?? "📦";
+  const CategoryIcon = CATEGORY_ICON_COMPONENTS[promo.categoryId] ?? Package;
   const categoryLabel = CATEGORY_LABELS[promo.categoryId] ?? "Otros";
   const bankColor = bank?.color ?? "#9ca3af";
 
@@ -75,7 +78,7 @@ export function PromoCard({ promo }: Props) {
         </div>
       ) : (
         <div className="h-36 flex items-center justify-center bg-gray-50">
-          <span className="text-4xl opacity-30">{categoryIcon}</span>
+          <CategoryIcon size={48} strokeWidth={1} className="text-gray-300" />
         </div>
       )}
 
@@ -87,8 +90,9 @@ export function PromoCard({ promo }: Props) {
 
         {/* Footer: categoría izq · banco der */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-50 gap-1">
-          <span className="text-xs text-gray-400 font-medium shrink-0">
-            {categoryIcon} {categoryLabel}
+          <span className="flex items-center gap-1 text-xs text-gray-400 font-medium shrink-0">
+            <CategoryIcon size={13} strokeWidth={2} />
+            {categoryLabel}
           </span>
           <span
             className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0"

@@ -28,12 +28,28 @@ export async function getPromos(filters?: {
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  // Ordenar por el orden fijo de categorías
-  return (data ?? []).sort(
-    (a, b) =>
-      (CATEGORY_ORDER[a.category_id as CategoryId] ?? 99) -
-      (CATEGORY_ORDER[b.category_id as CategoryId] ?? 99)
-  ) as Promo[];
+  // Mapear snake_case de Supabase → camelCase del tipo Promo y ordenar por categoría fija
+  return (data ?? [])
+    .sort(
+      (a, b) =>
+        (CATEGORY_ORDER[a.category_id as CategoryId] ?? 99) -
+        (CATEGORY_ORDER[b.category_id as CategoryId] ?? 99)
+    )
+    .map((row) => ({
+      id:            row.id,
+      bankId:        row.bank_id,
+      title:         row.title,
+      description:   row.description,
+      categoryId:    row.category_id,
+      discountType:  row.discount_type,
+      discountValue: row.discount_value,
+      expiresAt:     row.expires_at,
+      imageUrl:      row.image_url,
+      sourceUrl:     row.source_url,
+      isActive:      row.is_active,
+      createdAt:     row.created_at,
+      updatedAt:     row.updated_at,
+    })) as Promo[];
 }
 
 export async function getMetrics(): Promise<DashboardMetrics> {

@@ -1,16 +1,19 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { LayoutGrid, Fuel, ShoppingCart, Pill, UtensilsCrossed, Tv, Package } from "lucide-react";
 import type { CategoryId } from "@promocards/types";
 
-const CATEGORIES: Array<{ id: CategoryId | "todas"; label: string; icon: string }> = [
-  { id: "todas",         label: "Todas",         icon: "✨" },
-  { id: "gasolina",      label: "Gasolina",      icon: "⛽" },
-  { id: "supermercados", label: "Supermercados",  icon: "🛒" },
-  { id: "farmacias",     label: "Farmacias",     icon: "💊" },
-  { id: "restaurantes",  label: "Restaurantes",  icon: "🍽️" },
-  { id: "streaming",     label: "Streaming",     icon: "🎬" },
-  { id: "otros",         label: "Otros",         icon: "📦" },
+type IconComponent = React.ComponentType<{ size?: number; strokeWidth?: number }>;
+
+const CATEGORIES: Array<{ id: CategoryId | "todas"; label: string; Icon: IconComponent }> = [
+  { id: "todas",         label: "Todas",         Icon: LayoutGrid },
+  { id: "gasolina",      label: "Gasolina",      Icon: Fuel },
+  { id: "supermercados", label: "Supermercados",  Icon: ShoppingCart },
+  { id: "farmacias",     label: "Farmacias",     Icon: Pill },
+  { id: "restaurantes",  label: "Restaurantes",  Icon: UtensilsCrossed },
+  { id: "streaming",     label: "Streaming",     Icon: Tv },
+  { id: "otros",         label: "Otros",         Icon: Package },
 ];
 
 export function CategoryFilter({ vertical = false }: { vertical?: boolean }) {
@@ -39,7 +42,7 @@ export function CategoryFilter({ vertical = false }: { vertical?: boolean }) {
                 : `px-4 py-2 rounded-full text-sm ${isActive ? "bg-gray-900 text-white shadow-md scale-105" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-400 hover:bg-gray-50"}`
               }`}
           >
-            <span>{cat.icon}</span>
+            <cat.Icon size={14} strokeWidth={2} />
             {cat.label}
           </button>
         );
