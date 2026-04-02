@@ -78,12 +78,12 @@ async function debugCredicomer() {
   page.on("response", async (response) => {
     const url = response.url();
     allUrls.push(`[${response.status()}] ${url}`);
-    if (url.includes("/api/promotions") && !url.includes("/image") && response.status() === 200) {
+    if (url.includes("credicomer.com.sv/api/") && !url.includes("/image") && response.status() === 200) {
       try {
         const ct = response.headers()["content-type"] ?? "";
         if (ct.includes("application/json")) {
           const json = await response.json();
-          console.log(`  → JSON capturado de ${url}:`, JSON.stringify(json).substring(0, 300));
+          console.log(`  → JSON capturado de ${url}:`, JSON.stringify(json?.response ?? json).substring(0, 2000));
           if (Array.isArray(json)) apiResponses.push(...json);
           else if (Array.isArray(json?.data)) apiResponses.push(...json.data);
           else if (Array.isArray(json?.promotions)) apiResponses.push(...json.promotions);

@@ -31,10 +31,11 @@ export async function deleteAllPromos(): Promise<void> {
 export async function savePromos(promos: RawPromo[]): Promise<void> {
   if (promos.length === 0) return;
 
-  // Deduplicar por título (case-insensitive) dentro del mismo banco
+  // Deduplicar por sourceUrl (incluye el ID único de la promo)
+  // Esto permite que el mismo banco tenga promos con igual título pero diferente ID
   const seen = new Map<string, RawPromo>();
   for (const p of promos) {
-    const key = `${p.bankId}::${p.title.toLowerCase().trim()}`;
+    const key = p.sourceUrl || `${p.bankId}::${p.title.toLowerCase().trim()}`;
     if (!seen.has(key)) seen.set(key, p);
   }
   const unique = Array.from(seen.values());
