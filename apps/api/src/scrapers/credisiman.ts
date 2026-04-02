@@ -25,13 +25,15 @@ export async function credisimanScraper(): Promise<void> {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     });
 
-    // Interceptar API de Credisiman si existe
+    // Interceptar API de Credisiman (ingress-prd.credisiman.com)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const apiPromos: any[] = [];
     page.on("response", async (response) => {
       const url = response.url();
       if (
-        (url.includes("/api/promotion") || url.includes("/promotion/api")) &&
+        (url.includes("ingress-prd.credisiman.com/cards/promotions") ||
+         url.includes("/api/promotion") ||
+         url.includes("/promotion/api")) &&
         response.status() === 200
       ) {
         try {
@@ -40,6 +42,9 @@ export async function credisimanScraper(): Promise<void> {
             const json = await response.json();
             if (Array.isArray(json)) apiPromos.push(...json);
             else if (Array.isArray(json?.data)) apiPromos.push(...json.data);
+            else if (Array.isArray(json?.content)) apiPromos.push(...json.content);
+            else if (Array.isArray(json?.promotions)) apiPromos.push(...json.promotions);
+            else if (Array.isArray(json?.response)) apiPromos.push(...json.response);
           }
         } catch { /* ignorar */ }
       }
@@ -69,7 +74,7 @@ export async function credisimanScraper(): Promise<void> {
             discountType: detectDiscountType(combined),
             discountValue: extractDiscountValue(combined),
             expiresAt: parseSpanishDate(combined) ?? null,
-            imageUrl: null,
+            imageUrl: item.imageUrl ?? item.image ?? item.banner ?? item.thumbnail ?? item.photo ?? item.img ?? item.picture ?? null,
             sourceUrl: item.id
               ? `${LIST_URL}#${item.id}`
               : `${LIST_URL}#${slug}`,

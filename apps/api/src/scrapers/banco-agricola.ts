@@ -31,8 +31,9 @@ export async function bancoAgricolaScraper(): Promise<void> {
           const description = card.querySelector("p.promos-mes-descripcion")?.textContent?.trim() ?? null;
           const verMas = card.querySelector("a.ver-mas");
           const promoId = verMas?.getAttribute("id2") ?? verMas?.getAttribute("id") ?? "";
-          const imgEl = card.querySelector(".promos-mes-item-imagen img") as HTMLImageElement | null;
-          const imageUrl = imgEl?.src && !imgEl.src.startsWith("data:") ? imgEl.src : null;
+          const imgDiv = card.querySelector(".promos-mes-item-imagen") as HTMLElement | null;
+          const bgStyle = imgDiv?.style.backgroundImage ?? "";
+          const imageUrl = bgStyle.match(/url\(["']?([^"')]+)["']?\)/)?.[1] ?? null;
 
           // Si hay store y título, combinarlos para contexto completo
           const displayTitle = store && title
