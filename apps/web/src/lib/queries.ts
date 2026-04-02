@@ -19,6 +19,7 @@ export async function getPromos(filters?: {
   let query = db
     .from("promos")
     .select("*")
+    .eq("is_active", true)
     .order("expires_at", { ascending: true });
 
   if (filters?.categoryId) query = query.eq("category_id", filters.categoryId);
@@ -41,16 +42,18 @@ export async function getMetrics(): Promise<DashboardMetrics> {
 
   const [{ count: total }, { data: bestDiscount }, { count: expiringThisWeek }] =
     await Promise.all([
-      db.from("promos").select("*", { count: "exact", head: true }),
+      db.from("promos").select("*", { count: "exact", head: true }).eq("is_active", true),
       db
         .from("promos")
         .select("discount_value")
+        .eq("is_active", true)
         .eq("discount_type", "percentage")
         .order("discount_value", { ascending: false })
         .limit(1),
       db
         .from("promos")
         .select("*", { count: "exact", head: true })
+        .eq("is_active", true)
         .lte("expires_at", oneWeekFromNow.toISOString()),
     ]);
 
