@@ -32,6 +32,7 @@ export const CATEGORY_KEYWORDS: Array<{ categoryId: CategoryId; keywords: string
       "streaming", "paramount", "apple tv", "entretenimiento digital",
       "plataforma digital", "plataformas de streaming",
       "plataformas de entretenimiento", "suscripcion digital", "suscripción digital",
+      "50% de descuento en entretenimiento",
     ],
   },
   {
@@ -48,7 +49,7 @@ export const CATEGORY_KEYWORDS: Array<{ categoryId: CategoryId; keywords: string
       "super selectos", "súper selectos",
       "walmart", "supermercado", "supermercados",
       "despensa de don juan", "maxi despensa",
-      "la colonia",
+      "la colonia", "delivery", "pedidosya",
     ],
   },
   {
@@ -64,8 +65,9 @@ export const CATEGORY_KEYWORDS: Array<{ categoryId: CategoryId; keywords: string
     keywords: [
       "restaurante", "restaurant", "pizza", "burger", "pollo campero",
       "comida", "food", "café", "cafe", "sushi",
-      "wendy", "mcdonald", "subway", "delivery", "pedidosya",
-      "domino", "little caesars",
+      "wendy", "mcdonald", "subway", "domino", "little caesars",
+      "kip", "comet", "bistro", "coffee", "american diner",
+      "the coffee", "all american",
     ],
   },
 ];
