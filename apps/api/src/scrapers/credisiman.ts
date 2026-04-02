@@ -41,6 +41,7 @@ export async function credisimanScraper(): Promise<void> {
           if (contentType.includes("application/json")) {
             const json = await response.json();
             if (Array.isArray(json)) apiPromos.push(...json);
+            else if (Array.isArray(json?.response?.content)) apiPromos.push(...json.response.content);
             else if (Array.isArray(json?.data)) apiPromos.push(...json.data);
             else if (Array.isArray(json?.content)) apiPromos.push(...json.content);
             else if (Array.isArray(json?.promotions)) apiPromos.push(...json.promotions);
@@ -74,7 +75,9 @@ export async function credisimanScraper(): Promise<void> {
             discountType: detectDiscountType(combined),
             discountValue: extractDiscountValue(combined),
             expiresAt: parseSpanishDate(combined) ?? null,
-            imageUrl: item.imageUrl ?? item.image ?? item.banner ?? item.thumbnail ?? item.photo ?? item.img ?? item.picture ?? null,
+            imageUrl: item.image
+              ? `https://ingress-prd.credisiman.com/users/media/files?q=${encodeURIComponent(item.image)}`
+              : null,
             sourceUrl: item.id
               ? `${LIST_URL}#${item.id}`
               : `${LIST_URL}#${slug}`,
