@@ -129,41 +129,24 @@ export async function credicomerScraper(): Promise<void> {
     // Fallback: scraping del DOM
     console.log(`[${BANK_ID}] API no capturada, usando scraping DOM como fallback`);
 
-    // Loguear estructura HTML de la primera card para diagnóstico
-    const firstCardHtml = await page.$eval(
-      "img[src*='/api/promotions/']",
-      (img) => {
-        const card = img.closest("li, article, [class*='card']") ?? img.parentElement?.parentElement?.parentElement;
-        return card?.outerHTML?.slice(0, 800) ?? img.parentElement?.parentElement?.outerHTML?.slice(0, 800) ?? "NO CARD";
-      }
-    ).catch(() => "ERROR");
-    console.log(`[${BANK_ID}] HTML primera card:`, firstCardHtml);
-
     const rawPromos: RawPromo[] = await page
       .$$eval("img[src*='/api/promotions/']", (imgs) =>
         imgs.map((img) => {
           const imgEl = img as HTMLImageElement;
           const imgSrc = imgEl.src ?? "";
           const promoId = imgSrc.match(/\/api\/promotions\/(\d+)\//)?.[1] ?? "";
-          // Subir hasta encontrar un contenedor con texto
-          let card: Element | null = imgEl.parentElement;
-          for (let i = 0; i < 5; i++) {
-            if (!card) break;
-            const text = card.textContent?.trim() ?? "";
-            if (text.length > 5) break;
-            card = card.parentElement;
-          }
+          // La card es el ancestor con clase "card"
+          const card = imgEl.closest("[class*='card']") ?? imgEl.parentElement?.parentElement?.parentElement;
           const rawText = card?.textContent?.trim() ?? "";
-          // Buscar el primer elemento de texto hijo directo con contenido
-          const allText = card ? Array.from(card.querySelectorAll("*"))
-            .filter((el) => el.children.length === 0 && (el.textContent?.trim().length ?? 0) > 3)
-            .map((el) => el.textContent?.trim() ?? "") : [];
-          const title = allText[0] ?? rawText.slice(0, 100) ?? "";
-          const description = allText.slice(1).join(" ") || null;
+          // El título está en el div con clase text-lg, la descripción en text-sm
+          const titleEl = card?.querySelector("[class*='text-lg']");
+          const descEl = card?.querySelector("[class*='text-sm']");
+          const title = titleEl?.textContent?.trim() ?? rawText.slice(0, 80);
+          const description = descEl?.textContent?.trim() ?? null;
           return {
             title,
             description,
-            imageUrl: imgSrc || null,
+            imageUrl: imgSrc ? `https://www.credicomer.com.sv${imgSrc}` : null,
             sourceUrl: promoId
               ? `https://www.credicomer.com.sv/personas/promociones/${promoId}`
               : "https://www.credicomer.com.sv/personas/promociones",

@@ -33,21 +33,20 @@ export async function savePromos(promos: RawPromo[]): Promise<void> {
   // Obtener los bankIds únicos de este batch
   const bankIds = [...new Set(unique.map((p) => p.bankId))];
 
-  // Paso 1: marcar TODAS las promos de este banco como inactivas.
-  // El upsert a continuación las reactivará si siguen apareciendo en el scrape.
-  // Esto garantiza que promos obsoletas (URL cambiada, eliminadas del sitio) desaparezcan.
+  // Paso 1: eliminar TODAS las promos anteriores del banco.
+  // Cada scrape es la fuente de verdad — lo que no aparece hoy, no existe.
   for (const bankId of bankIds) {
-    const { error: deactivateError } = await getSupabase()
+    const { error: deleteError } = await getSupabase()
       .from("promos")
-      .update({ is_active: false })
+      .delete()
       .eq("bank_id", bankId);
-    if (deactivateError) {
-      console.warn(`[db] No se pudo desactivar promos de ${bankId}: ${deactivateError.message}`);
+    if (deleteError) {
+      console.warn(`[db] No se pudo eliminar promos de ${bankId}: ${deleteError.message}`);
     }
   }
 
-  // Paso 2: upsert con datos frescos (is_active: true, categoría actualizada, etc.)
-  const { error } = await getSupabase().from("promos").upsert(
+  // Paso 2: insertar las promos frescas del scrape
+  const { error } = await getSupabase().from("promos").insert(
     unique.map((p) => ({
       bank_id: p.bankId,
       title: p.title,
@@ -58,10 +57,8 @@ export async function savePromos(promos: RawPromo[]): Promise<void> {
       expires_at: p.expiresAt,
       image_url: p.imageUrl,
       source_url: p.sourceUrl,
-      is_active: true,
       updated_at: new Date().toISOString(),
-    })),
-    { onConflict: "bank_id,source_url" }
+    }))
   );
 
   if (error) throw new Error(`Error guardando promos: ${error.message}`);
