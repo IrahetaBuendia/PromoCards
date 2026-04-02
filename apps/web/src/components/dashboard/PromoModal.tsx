@@ -14,7 +14,8 @@ const BANK_CONFIG: Record<BankId, { name: string; badge: string; accent: string 
 
 const CATEGORY_ICONS: Record<CategoryId, string> = {
   gasolina: "⛽", supermercados: "🛒", farmacias: "💊",
-  restaurantes: "🍽️", streaming: "🎬", otros: "📦",
+  restaurantes: "🍽️", almacenes: "🏬", "repuestos-talleres": "🔧",
+  streaming: "🎬", otros: "📦",
 };
 
 function mustReport(text: string): boolean {

@@ -1,4 +1,4 @@
-import { Fuel, ShoppingCart, Pill, UtensilsCrossed, Tv, Package } from "lucide-react";
+import { Fuel, ShoppingCart, Pill, UtensilsCrossed, Store, Wrench, Tv, Package } from "lucide-react";
 import type { Promo, BankId, CategoryId } from "@promocards/types";
 
 const BANK_CONFIG: Record<BankId, { name: string; color: string; headerText: string; badgeBg: string; badgeText: string }> = {
@@ -13,31 +13,37 @@ const BANK_CONFIG: Record<BankId, { name: string; color: string; headerText: str
 type CategoryIconComponent = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string; style?: React.CSSProperties }>;
 
 const CATEGORY_ICON_COMPONENTS: Record<CategoryId, CategoryIconComponent> = {
-  gasolina:      Fuel,
-  supermercados: ShoppingCart,
-  farmacias:     Pill,
-  restaurantes:  UtensilsCrossed,
-  streaming:     Tv,
-  otros:         Package,
+  gasolina:           Fuel,
+  supermercados:      ShoppingCart,
+  farmacias:          Pill,
+  restaurantes:       UtensilsCrossed,
+  almacenes:          Store,
+  "repuestos-talleres": Wrench,
+  streaming:          Tv,
+  otros:              Package,
+};
+
+const CATEGORY_LABELS: Record<CategoryId, string> = {
+  gasolina:           "Gasolina",
+  supermercados:      "Supermercados",
+  farmacias:          "Farmacias",
+  restaurantes:       "Restaurantes",
+  almacenes:          "Almacenes",
+  "repuestos-talleres": "Repuestos y Talleres",
+  streaming:          "Streaming",
+  otros:              "Otros",
 };
 
 // Fondo e ícono coloridos para el placeholder cuando no hay imagen
 const CATEGORY_PLACEHOLDER: Record<CategoryId, { bg: string; iconColor: string }> = {
-  gasolina:      { bg: "#fff7ed", iconColor: "#ea580c" },
-  supermercados: { bg: "#f0fdf4", iconColor: "#16a34a" },
-  farmacias:     { bg: "#eff6ff", iconColor: "#2563eb" },
-  restaurantes:  { bg: "#fff1f2", iconColor: "#e11d48" },
-  streaming:     { bg: "#faf5ff", iconColor: "#9333ea" },
-  otros:         { bg: "#f1f5f9", iconColor: "#64748b" },
-};
-
-const CATEGORY_LABELS: Record<CategoryId, string> = {
-  gasolina:      "Gasolina",
-  supermercados: "Supermercados",
-  farmacias:     "Farmacias",
-  restaurantes:  "Restaurantes",
-  streaming:     "Streaming",
-  otros:         "Otros",
+  gasolina:           { bg: "#fff7ed", iconColor: "#ea580c" },
+  supermercados:      { bg: "#f0fdf4", iconColor: "#16a34a" },
+  farmacias:          { bg: "#eff6ff", iconColor: "#2563eb" },
+  restaurantes:       { bg: "#fff1f2", iconColor: "#e11d48" },
+  almacenes:          { bg: "#fdf4ff", iconColor: "#a21caf" },
+  "repuestos-talleres": { bg: "#fefce8", iconColor: "#ca8a04" },
+  streaming:          { bg: "#faf5ff", iconColor: "#9333ea" },
+  otros:              { bg: "#f1f5f9", iconColor: "#64748b" },
 };
 
 interface Props {

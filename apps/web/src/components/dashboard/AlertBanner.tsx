@@ -8,7 +8,8 @@ const PRIORITY_CATEGORIES: CategoryId[] = ["gasolina", "supermercados", "farmaci
 
 const CATEGORY_ICONS: Record<CategoryId, string> = {
   gasolina: "⛽", supermercados: "🛒", farmacias: "💊",
-  restaurantes: "🍽️", streaming: "🎬", otros: "📦",
+  restaurantes: "🍽️", almacenes: "🏬", "repuestos-talleres": "🔧",
+  streaming: "🎬", otros: "📦",
 };
 
 const BANK_NAMES: Record<string, string> = {

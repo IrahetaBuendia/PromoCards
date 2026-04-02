@@ -67,7 +67,29 @@ export const CATEGORY_KEYWORDS: Array<{ categoryId: CategoryId; keywords: string
       "comida", "food", "café", "cafe", "sushi",
       "wendy", "mcdonald", "subway", "domino", "little caesars",
       "kip", "comet", "bistro", "coffee", "american diner",
-      "the coffee", "all american",
+      "the coffee",
+    ],
+  },
+  {
+    categoryId: "almacenes",
+    keywords: [
+      "almacen", "almacenes", "la curacao", "curacao",
+      "radio shack", "radioshack",
+      "tropigas", "almacenes tropigas",
+      "siman", "adoc", "bata", "payless",
+      "tienda departamental", "tiendas departamentales",
+      "liverpool", "el precio", "celeste",
+    ],
+  },
+  {
+    categoryId: "repuestos-talleres",
+    keywords: [
+      "repuesto", "repuestos", "autoparts", "auto parts",
+      "taller", "talleres", "taller mecanico", "taller mecánico",
+      "mecanica", "mecánica", "llanta", "llantas",
+      "bateria", "batería", "aceite", "lubricante",
+      "goodyear", "bridgestone", "michelin", "pirelli",
+      "refaccion", "refacciones", "piezas", "vehiculo", "vehículo",
     ],
   },
 ];

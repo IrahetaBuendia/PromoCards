@@ -26,6 +26,8 @@ export type CategoryId =
   | "supermercados"
   | "farmacias"
   | "restaurantes"
+  | "almacenes"
+  | "repuestos-talleres"
   | "streaming"
   | "otros";
 
@@ -34,8 +36,10 @@ export const CATEGORY_ORDER: Record<CategoryId, number> = {
   supermercados: 2,
   farmacias: 3,
   restaurantes: 4,
-  streaming: 5,
-  otros: 6,
+  almacenes: 5,
+  "repuestos-talleres": 6,
+  streaming: 7,
+  otros: 8,
 };
 
 export interface Category {

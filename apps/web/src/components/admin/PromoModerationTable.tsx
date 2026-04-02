@@ -15,12 +15,14 @@ const BANK_NAMES: Record<BankId, string> = {
 };
 
 const CATEGORY_LABELS: Record<CategoryId, string> = {
-  gasolina: "⛽ Gasolina",
-  supermercados: "🛒 Supermercados",
-  farmacias: "💊 Farmacias",
-  restaurantes: "🍽️ Restaurantes",
-  streaming: "🎬 Streaming",
-  otros: "📦 Otros",
+  gasolina:             "⛽ Gasolina",
+  supermercados:        "🛒 Supermercados",
+  farmacias:            "💊 Farmacias",
+  restaurantes:         "🍽️ Restaurantes",
+  almacenes:            "🏬 Almacenes",
+  "repuestos-talleres": "🔧 Repuestos y Talleres",
+  streaming:            "🎬 Streaming",
+  otros:                "📦 Otros",
 };
 
 const ALL_BANKS: Array<{ value: string; label: string }> = [
@@ -39,6 +41,8 @@ const ALL_CATEGORIES: Array<{ value: string; label: string }> = [
   { value: "supermercados", label: "🛒 Supermercados" },
   { value: "farmacias", label: "💊 Farmacias" },
   { value: "restaurantes", label: "🍽️ Restaurantes" },
+  { value: "almacenes", label: "🏬 Almacenes" },
+  { value: "repuestos-talleres", label: "🔧 Repuestos y Talleres" },
   { value: "streaming", label: "🎬 Streaming" },
   { value: "otros", label: "📦 Otros" },
 ];
