@@ -6,7 +6,7 @@ interface Props {
 
 export function MetricsBar({ metrics }: Props) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <MetricCard
         label="Promociones activas"
         value={metrics.totalActivePromos.toString()}
@@ -36,17 +36,18 @@ export function MetricsBar({ metrics }: Props) {
 }
 
 function MetricCard({
-  label, value, icon, accent, bg, text,
+  label, value, icon, bg, text,
 }: {
   label: string; value: string; icon: string;
   accent: string; bg: string; text: string;
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${bg} p-6 border border-white/60 shadow-sm`}>
-      <div className={`absolute top-0 right-0 w-24 h-24 rounded-full bg-gradient-to-br ${accent} opacity-10 translate-x-6 -translate-y-6`} />
-      <div className="text-3xl mb-3">{icon}</div>
-      <div className={`text-3xl font-extrabold ${text}`}>{value}</div>
-      <div className="text-sm text-gray-500 mt-1 font-medium">{label}</div>
+    <div className={`flex items-center gap-3 rounded-xl ${bg} px-4 py-3 border border-white/60 shadow-sm`}>
+      <span className="text-xl">{icon}</span>
+      <div>
+        <div className={`text-lg font-extrabold leading-none ${text}`}>{value}</div>
+        <div className="text-xs text-gray-500 mt-0.5 font-medium">{label}</div>
+      </div>
     </div>
   );
 }

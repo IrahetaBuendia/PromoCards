@@ -14,7 +14,7 @@ const BANKS: Array<{ id: BankId | "todos"; label: string; short: string; color: 
   { id: "banco-agricola",   label: "Banco Agrícola",   short: "Agrícola", color: "border-teal-200 text-teal-700",         active: "bg-teal-600 text-white" },
 ];
 
-export function BankFilter() {
+export function BankFilter({ vertical = false }: { vertical?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const active = searchParams.get("banco") ?? "todos";
@@ -27,20 +27,20 @@ export function BankFilter() {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className={vertical ? "flex flex-col gap-1" : "flex flex-wrap gap-2"}>
       {BANKS.map((bank) => {
         const isActive = active === bank.id;
         return (
           <button
             key={bank.id}
             onClick={() => handleSelect(bank.id)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200
-              ${isActive
-                ? `${bank.active} shadow-md scale-105 border-transparent`
-                : `bg-white ${bank.color} hover:bg-gray-50`
+            className={`font-semibold transition-all duration-200
+              ${vertical
+                ? `w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-left ${isActive ? `${bank.active} border-transparent` : `${bank.color} hover:bg-gray-50`}`
+                : `px-4 py-2 rounded-full text-sm border ${isActive ? `${bank.active} shadow-md scale-105 border-transparent` : `bg-white ${bank.color} hover:bg-gray-50`}`
               }`}
           >
-            {bank.short}
+            {vertical ? bank.label : bank.short}
           </button>
         );
       })}

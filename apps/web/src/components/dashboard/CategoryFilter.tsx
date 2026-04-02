@@ -13,7 +13,7 @@ const CATEGORIES: Array<{ id: CategoryId | "todas"; label: string; icon: string 
   { id: "otros",         label: "Otros",         icon: "📦" },
 ];
 
-export function CategoryFilter() {
+export function CategoryFilter({ vertical = false }: { vertical?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const active = searchParams.get("categoria") ?? "todas";
@@ -26,20 +26,20 @@ export function CategoryFilter() {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className={vertical ? "flex flex-col gap-1" : "flex flex-wrap gap-2"}>
       {CATEGORIES.map((cat) => {
         const isActive = active === cat.id;
         return (
           <button
             key={cat.id}
             onClick={() => handleSelect(cat.id)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200
-              ${isActive
-                ? "bg-gray-900 text-white shadow-md scale-105"
-                : "bg-white border border-gray-200 text-gray-600 hover:border-gray-400 hover:bg-gray-50"
+            className={`flex items-center gap-1.5 font-semibold transition-all duration-200
+              ${vertical
+                ? `w-full px-3 py-1.5 rounded-lg text-sm text-left ${isActive ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-100"}`
+                : `px-4 py-2 rounded-full text-sm ${isActive ? "bg-gray-900 text-white shadow-md scale-105" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-400 hover:bg-gray-50"}`
               }`}
           >
-            <span className="text-base">{cat.icon}</span>
+            <span>{cat.icon}</span>
             {cat.label}
           </button>
         );

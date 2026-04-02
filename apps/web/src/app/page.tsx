@@ -3,13 +3,11 @@ import Link from "next/link";
 import type { CategoryId, BankId } from "@promocards/types";
 import { getPromos, getMetrics } from "@/lib/api";
 import { MetricsBar } from "@/components/dashboard/MetricsBar";
-import { CategoryFilter } from "@/components/dashboard/CategoryFilter";
-import { BankFilter } from "@/components/dashboard/BankFilter";
-import { TodayFilter } from "@/components/dashboard/TodayFilter";
 import { PromoGrid } from "@/components/dashboard/PromoGrid";
 import { AlertBanner } from "@/components/dashboard/AlertBanner";
 import { NotificationButton } from "@/components/dashboard/NotificationButton";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
+import { FilterSidebar } from "@/components/dashboard/FilterSidebar";
 import type { Promo } from "@promocards/types";
 
 const DAYS_ES = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
@@ -94,7 +92,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-4">
 
         {/* Alertas de vencimiento */}
         <AlertBanner promos={allPromos} />
@@ -102,41 +100,28 @@ export default async function DashboardPage({ searchParams }: Props) {
         {/* Métricas */}
         <MetricsBar metrics={metrics} />
 
-        {/* Filtros */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5">Categoría</p>
-            <Suspense>
-              <CategoryFilter />
-            </Suspense>
-          </div>
-          <div className="border-t border-gray-100 pt-4">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5">Banco</p>
-            <Suspense>
-              <BankFilter />
-            </Suspense>
-          </div>
-          <div className="border-t border-gray-100 pt-4">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5">Fecha</p>
-            <Suspense>
-              <TodayFilter />
-            </Suspense>
+        {/* Layout principal: botón toggle + sidebar + contenido */}
+        <div className="flex gap-5 items-start">
+
+          {/* Sidebar con filtros */}
+          <Suspense>
+            <FilterSidebar />
+          </Suspense>
+
+          {/* Contenido principal */}
+          <div className="flex-1 min-w-0 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-500 font-medium">
+                {filteredPromos.length} {filteredPromos.length === 1 ? "promoción" : "promociones"}
+                {categoria ? ` · ${categoria}` : ""}
+                {banco ? ` · ${banco}` : ""}
+                {hoy === "1" ? " · válidas hoy" : ""}
+              </p>
+              <p className="text-xs text-gray-400 hidden sm:block">Clic en una tarjeta para ver detalles</p>
+            </div>
+            <PromoGrid promos={filteredPromos} />
           </div>
         </div>
-
-        {/* Contador */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500 font-medium">
-            {filteredPromos.length} {filteredPromos.length === 1 ? "promoción" : "promociones"}
-            {categoria ? ` · ${categoria}` : ""}
-            {banco ? ` · ${banco}` : ""}
-            {hoy === "1" ? " · válidas hoy" : ""}
-          </p>
-          <p className="text-xs text-gray-400 hidden sm:block">Clic en una tarjeta para ver detalles</p>
-        </div>
-
-        {/* Grilla */}
-        <PromoGrid promos={filteredPromos} />
       </div>
 
       <footer className="text-center py-8 text-xs text-gray-400 border-t border-gray-100 mt-8">
