@@ -10,6 +10,9 @@ const CATEGORIES: { id: CategoryId; label: string }[] = [
   { id: "supermercados", label: "🛒 Supermercados" },
   { id: "farmacias", label: "💊 Farmacias" },
   { id: "restaurantes", label: "🍽️ Restaurantes" },
+  { id: "almacenes", label: "🏪 Almacenes" },
+  { id: "repuestos-talleres", label: "🔧 Repuestos y Talleres" },
+  { id: "ferreterias", label: "🔨 Ferreterías" },
   { id: "streaming", label: "🎬 Streaming" },
   { id: "otros", label: "📦 Otros" },
 ];

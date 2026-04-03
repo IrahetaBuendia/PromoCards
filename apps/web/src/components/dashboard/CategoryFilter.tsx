@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { LayoutGrid, Fuel, ShoppingCart, Pill, UtensilsCrossed, Store, Wrench, Tv, Package } from "lucide-react";
+import { LayoutGrid, Fuel, ShoppingCart, Pill, UtensilsCrossed, Store, Wrench, Hammer, Tv, Package } from "lucide-react";
 import type { CategoryId } from "@promocards/types";
 
 type IconComponent = React.ComponentType<{ size?: number; strokeWidth?: number }>;
@@ -14,6 +14,7 @@ const CATEGORIES: Array<{ id: CategoryId | "todas"; label: string; Icon: IconCom
   { id: "restaurantes",        label: "Restaurantes",         Icon: UtensilsCrossed },
   { id: "almacenes",           label: "Almacenes",            Icon: Store },
   { id: "repuestos-talleres",  label: "Repuestos y Talleres", Icon: Wrench },
+  { id: "ferreterias",         label: "Ferreterías",          Icon: Hammer },
   { id: "streaming",           label: "Streaming",            Icon: Tv },
   { id: "otros",               label: "Otros",                Icon: Package },
 ];

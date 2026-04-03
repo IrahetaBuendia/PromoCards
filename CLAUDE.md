@@ -60,7 +60,7 @@ Definidos en `packages/types/src/index.ts`. Al modificar `CategoryId` u otros ti
 
 ```
 gasolina → supermercados → farmacias → restaurantes →
-almacenes → repuestos-talleres → streaming → otros
+almacenes → repuestos-talleres → ferreterias → streaming → otros
 ```
 
 ---
