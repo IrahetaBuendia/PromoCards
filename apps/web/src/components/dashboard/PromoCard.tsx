@@ -1,4 +1,4 @@
-import { Fuel, ShoppingCart, Pill, UtensilsCrossed, Store, Wrench, Tv, Package } from "lucide-react";
+import { Fuel, ShoppingCart, Pill, UtensilsCrossed, Store, Wrench, Hammer, Tv, Package } from "lucide-react";
 import type { Promo, BankId, CategoryId } from "@promocards/types";
 
 const BANK_CONFIG: Record<BankId, { name: string; color: string; headerText: string; badgeBg: string; badgeText: string }> = {
@@ -19,6 +19,7 @@ const CATEGORY_ICON_COMPONENTS: Record<CategoryId, CategoryIconComponent> = {
   restaurantes:       UtensilsCrossed,
   almacenes:          Store,
   "repuestos-talleres": Wrench,
+  ferreterias:        Hammer,
   streaming:          Tv,
   otros:              Package,
 };
@@ -30,6 +31,7 @@ const CATEGORY_LABELS: Record<CategoryId, string> = {
   restaurantes:       "Restaurantes",
   almacenes:          "Almacenes",
   "repuestos-talleres": "Repuestos y Talleres",
+  ferreterias:        "Ferreterías",
   streaming:          "Streaming",
   otros:              "Otros",
 };
@@ -42,6 +44,7 @@ const CATEGORY_PLACEHOLDER: Record<CategoryId, { bg: string; iconColor: string }
   restaurantes:       { bg: "#fff1f2", iconColor: "#e11d48" },
   almacenes:          { bg: "#fdf4ff", iconColor: "#a21caf" },
   "repuestos-talleres": { bg: "#fefce8", iconColor: "#ca8a04" },
+  ferreterias:        { bg: "#fff8f1", iconColor: "#b45309" },
   streaming:          { bg: "#faf5ff", iconColor: "#9333ea" },
   otros:              { bg: "#f1f5f9", iconColor: "#64748b" },
 };

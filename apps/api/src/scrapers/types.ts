@@ -92,6 +92,20 @@ export const CATEGORY_KEYWORDS: Array<{ categoryId: CategoryId; keywords: string
       "refaccion", "refacciones", "piezas", "vehiculo", "vehículo",
     ],
   },
+  {
+    categoryId: "ferreterias",
+    keywords: [
+      "ferreteria", "ferreterías", "ferretería", "ferreterias",
+      "herramienta", "herramientas", "truper", "stanley",
+      "black & decker", "black and decker", "dewalt", "makita",
+      "construmart", "construrama", "construcentro",
+      "plomeria", "plomería", "electricidad", "electrico", "eléctrico",
+      "construccion", "construcción", "cemento", "pintura", "pinturas",
+      "materiales de construccion", "materiales de construcción",
+      "tornillo", "tornillos", "clavo", "clavos", "tubo", "tuberia",
+      "soldadura", "taladro", "sierra", "corte", "madera",
+    ],
+  },
 ];
 
 export function detectCategory(text: string): CategoryId {
