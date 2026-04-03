@@ -71,7 +71,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             </div>
             <div>
               <h1 className="text-lg font-extrabold text-gray-900 leading-none">PromoCards SV</h1>
-              <p className="text-xs text-gray-400 mt-0.5">6 bancos · actualiza cada 4 horas</p>
+              <p className="text-xs text-gray-400 mt-0.5">6 bancos · actualiza 3 veces al día</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
