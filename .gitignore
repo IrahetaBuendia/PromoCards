@@ -31,3 +31,9 @@ Thumbs.db
 # Playwright
 /test-results/
 /playwright-report/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Claude Code local settings (may contain tokens)
+.claude/settings.local.json
