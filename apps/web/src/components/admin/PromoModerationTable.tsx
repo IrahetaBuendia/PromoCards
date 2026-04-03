@@ -44,6 +44,7 @@ const ALL_CATEGORIES: Array<{ value: string; label: string }> = [
   { value: "restaurantes", label: "🍽️ Restaurantes" },
   { value: "almacenes", label: "🏬 Almacenes" },
   { value: "repuestos-talleres", label: "🔧 Repuestos y Talleres" },
+  { value: "ferreterias", label: "🔨 Ferreterías" },
   { value: "streaming", label: "🎬 Streaming" },
   { value: "otros", label: "📦 Otros" },
 ];
