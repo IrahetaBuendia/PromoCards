@@ -1,6 +1,8 @@
-# PromoCards SV
+# PromoCards SV — v1.0
 
-Web app privada que consolida las promociones de 6 tarjetas de crédito salvadoreñas en un solo dashboard. Cada 4 horas, scrapers headless (Playwright) recorren los sitios de los bancos, clasifican las promos por categoría y las almacenan en Supabase.
+Web app privada que consolida las promociones de 6 tarjetas de crédito salvadoreñas en un solo dashboard. Scrapers headless (Playwright) corren automáticamente 3 veces al día, clasifican las promos por categoría y las almacenan en Supabase.
+
+---
 
 ## Bancos cubiertos
 
@@ -8,7 +10,7 @@ Web app privada que consolida las promociones de 6 tarjetas de crédito salvador
 |---|---|
 | Fedecrédito | fedecredito.com.sv/promociones/todas |
 | Banco Industrial | corporacionbi.com/sv/bancoindustrialsv/promociones |
-| Credicomer | credicomer.com.sv/personas/promociones?type=emma |
+| Credicomer | credicomer.com.sv/personas/promociones |
 | BAC Credomatic | baccredomatic.com/es-sv/personas/promociones |
 | Credisiman | credisiman.com/promotion/SV |
 | Banco Agrícola | bancoagricola.com/promociones |
@@ -20,7 +22,7 @@ Web app privada que consolida las promociones de 6 tarjetas de crédito salvador
 ```
 promocards-sv/                  ← monorepo (pnpm workspaces + Turborepo)
 ├── apps/
-│   ├── api/                    ← Scrapers Playwright (solo local + GitHub Actions)
+│   ├── api/                    ← Scrapers Playwright (GitHub Actions)
 │   └── web/                    ← Next.js 15 + Tailwind (Vercel)
 └── packages/
     └── types/                  ← Tipos TypeScript compartidos
@@ -28,9 +30,9 @@ promocards-sv/                  ← monorepo (pnpm workspaces + Turborepo)
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│  GitHub Actions — gratis                             │
-│  Cron cada 4 h  →  apps/api/src/scrape.ts            │
-│  ubuntu-latest tiene Playwright + Chromium           │
+│  GitHub Actions                                      │
+│  Cron 7am / 12pm / 6pm SV  →  apps/api/src/scrape.ts │
+│  ubuntu-latest + Playwright + Chromium               │
 │  Escribe directo a Supabase                          │
 └───────────────────┬──────────────────────────────────┘
                     │ escribe
@@ -43,7 +45,7 @@ promocards-sv/                  ← monorepo (pnpm workspaces + Turborepo)
 ```
 
 - **Frontend + API**: Next.js 15 (App Router + Route Handlers) — Vercel
-- **Scrapers + Scheduler**: GitHub Actions (cron + workflow_dispatch)
+- **Scrapers**: GitHub Actions (cron + workflow_dispatch)
 - **Base de datos + Auth**: Supabase (gratuito)
 
 **100% sin costo** — Vercel hobby + Supabase free + GitHub Actions gratis.
@@ -63,13 +65,11 @@ promocards-sv/                  ← monorepo (pnpm workspaces + Turborepo)
 ### `apps/web/.env.local` (frontend + API routes)
 
 ```env
-# Supabase — claves en Settings → API
 NEXT_PUBLIC_SUPABASE_URL=https://<tu-proyecto>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-public-key>
-SUPABASE_SERVICE_ROLE_KEY=<service-role-key>   # server-only, nunca al browser
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 
 # Scrape manual desde el panel admin (opcional)
-# PAT de GitHub con scope "workflow"
 GITHUB_PAT=ghp_xxxxxxxxxxxx
 GITHUB_OWNER=tu-usuario
 GITHUB_REPO=promocards-sv
@@ -145,8 +145,6 @@ pnpm --filter @promocards/web dev
 # → http://localhost:3000
 ```
 
-El frontend usa Route Handlers propios para la API. No necesita el servidor Express.
-
 ### 4. Correr scrapers manualmente en local
 
 ```bash
@@ -205,13 +203,13 @@ pnpm --filter @promocards/api exec tsx src/scrape.ts bac-credomatic
 
 1. Conectar el repositorio en [vercel.com](https://vercel.com)
 2. Configurar **Root Directory** → `apps/web`
-3. Agregar variables de entorno en **Settings → Environment Variables**:
+3. Agregar variables de entorno en **Settings → Environment Variables**
 
 ```
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-GITHUB_PAT          ← opcional, para scrape manual desde el panel admin
+GITHUB_PAT          ← para scrape manual desde el panel admin
 GITHUB_OWNER
 GITHUB_REPO
 ```
@@ -220,44 +218,68 @@ GITHUB_REPO
 
 Agregar secrets en **Settings → Secrets and variables → Actions**:
 
-| Secret | Descripción |
-|---|---|
-| `SUPABASE_URL` | URL del proyecto Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key de Supabase |
-
-Los scrapers corren automáticamente cada 4 horas. También se pueden disparar manualmente desde **Actions → Scrapers → Run workflow** en GitHub, o desde el panel admin de la app.
-
----
-
-## CI/CD (GitHub Actions)
-
-| Workflow | Disparo | Qué hace |
-|---|---|---|
-| `ci.yml` | En cada PR a `main` | Type-check + lint + build. Bloquea merge si falla |
-| `deploy.yml` | En merge a `main` | Deploy automático a Vercel |
-| `scraper.yml` | Cron cada 4 h + manual | Corre los 6 scrapers y guarda en Supabase |
-
-### Secrets para CI/CD
-
 | Secret | Cómo obtenerlo |
 |---|---|
 | `VERCEL_TOKEN` | vercel.com → Settings → Tokens |
+| `VERCEL_ORG_ID` | `.vercel/project.json` tras correr `vercel link` |
 | `VERCEL_PROJECT_ID_WEB` | `.vercel/project.json` tras correr `vercel link` en `apps/web` |
 | `SUPABASE_URL` | Supabase → Settings → API |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API |
 
 ---
 
+## CI/CD (GitHub Actions)
+
+El repositorio tiene tres workflows:
+
+### `ci.yml` — Integración continua
+
+- **Disparo**: en cada Pull Request hacia `main`
+- **Qué hace**: build de tipos compartidos → type-check → lint
+- **Efecto**: bloquea el merge si algún paso falla
+
+### `deploy.yml` — Deploy automático
+
+- **Disparo**: en cada push/merge a `main`
+- **Qué hace**: build de tipos → deploy a Vercel en producción (`--prod`)
+- **Efecto**: la app en Vercel se actualiza automáticamente
+
+### `scraper.yml` — Scrapers programados
+
+- **Disparo automático**: cron `0 0,13,18 * * *` (UTC) = **7am, 12pm y 6pm hora El Salvador (UTC-6)**
+- **Disparo manual**: desde GitHub UI (Actions → Scrapers → Run workflow) o desde el panel admin de la app
+- **Input opcional**: `bank_id` para scrapear solo un banco (dejar vacío = todos)
+- **Qué hace**: instala Playwright + Chromium → corre `scrape.ts` → guarda en Supabase
+
+#### Flujo completo de un cambio
+
+```
+feature/nueva-funcionalidad
+        │
+        │ Pull Request → ci.yml corre (lint + type-check + build)
+        │
+        ▼
+      main  ──► deploy.yml corre ──► Vercel actualiza producción
+                       +
+              scraper.yml corre 3x/día ──► Supabase se actualiza
+```
+
+---
+
 ## Categorías
 
-Las promos se clasifican automáticamente por palabras clave. Orden fijo:
+Las promos se clasifican automáticamente por palabras clave en `apps/api/src/scrapers/types.ts`. Orden fijo:
 
-1. ⛽ Gasolina
-2. 🛒 Supermercados
-3. 💊 Farmacias
-4. 🍽️ Restaurantes
-5. 🎬 Streaming
-6. 📦 Otros
+| # | Icono | Categoría |
+|---|---|---|
+| 1 | ⛽ | Gasolina |
+| 2 | 🛒 | Supermercados |
+| 3 | 💊 | Farmacias |
+| 4 | 🍽️ | Restaurantes |
+| 5 | 🏬 | Almacenes |
+| 6 | 🔧 | Repuestos y Talleres |
+| 7 | 🎬 | Streaming |
+| 8 | 📦 | Otros |
 
 ---
 
@@ -268,8 +290,16 @@ apps/
   api/
     src/
       scrapers/       ← Un archivo por banco + clasificador por keywords
-      lib/db.ts       ← savePromos(), logScraperRun()
-      scrape.ts       ← Entry point para GitHub Actions (acepta bankId opcional)
+        types.ts      ← detectCategory(), detectDiscountType(), parseSpanishDate()
+        banco-agricola.ts
+        banco-industrial.ts
+        bac-credomatic.ts
+        credicomer.ts
+        credisiman.ts
+        fedecredito.ts
+      lib/
+        db.ts         ← savePromos(), logScraperRun()
+      scrape.ts       ← Entry point para GitHub Actions
   web/
     src/
       app/
@@ -278,14 +308,29 @@ apps/
         admin/              ← Panel de administración
         api/                ← Route Handlers (promos + admin)
       components/
-        dashboard/          ← MetricsBar, PromoGrid, PromoCard, filtros...
-        admin/              ← ScraperStatusPanel, PromoModerationTable, modals
+        dashboard/          ← MetricsBar, PromoGrid, PromoCard, PromoModal, filtros
+        admin/              ← ScraperStatusPanel, PromoModerationTable
       lib/
-        queries.ts          ← Funciones Supabase (server components + route handlers)
-        api.ts              ← Helpers para Server Components
-        admin-api.ts        ← Helpers fetch para Client Components
+        queries.ts          ← Funciones Supabase (server components)
         supabase/           ← Clientes browser, server, service, auth-guard
 packages/
   types/
     src/index.ts      ← BankId, CategoryId, Promo, ScraperRun, etc.
+```
+
+---
+
+## Rama de desarrollo
+
+A partir de la versión `1.0v`, los cambios nuevos se desarrollan en la rama `develop` y se integran a `main` mediante Pull Request. La rama `main` representa siempre la versión estable en producción.
+
+```bash
+# Trabajar en un nuevo cambio
+git checkout develop
+git pull origin develop
+
+# ... hacer cambios ...
+
+git push origin develop
+# → abrir PR develop → main en GitHub
 ```
