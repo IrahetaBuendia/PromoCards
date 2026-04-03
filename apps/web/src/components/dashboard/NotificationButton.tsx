@@ -8,7 +8,7 @@ const PRIORITY_CATEGORIES: CategoryId[] = ["gasolina", "supermercados", "farmaci
 const CATEGORY_ICONS: Record<CategoryId, string> = {
   gasolina: "⛽", supermercados: "🛒", farmacias: "💊",
   restaurantes: "🍽️", almacenes: "🏬", "repuestos-talleres": "🔧",
-  streaming: "🎬", otros: "📦",
+  ferreterias: "🔨", streaming: "🎬", otros: "📦",
 };
 
 interface Props {

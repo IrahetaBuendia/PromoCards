@@ -21,6 +21,7 @@ const CATEGORY_LABELS: Record<CategoryId, string> = {
   restaurantes:         "🍽️ Restaurantes",
   almacenes:            "🏬 Almacenes",
   "repuestos-talleres": "🔧 Repuestos y Talleres",
+  ferreterias:          "🔨 Ferreterías",
   streaming:            "🎬 Streaming",
   otros:                "📦 Otros",
 };
