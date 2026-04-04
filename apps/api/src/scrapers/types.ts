@@ -154,7 +154,7 @@ export function parseSpanishDate(text: string): string | null {
     const month = MESES[longMatch[2].toLowerCase()];
     const year = parseInt(longMatch[3]);
     if (month !== undefined) {
-      return new Date(year, month, day).toISOString();
+      return new Date(Date.UTC(year, month, day, 12, 0, 0)).toISOString();
     }
   }
 
@@ -162,7 +162,7 @@ export function parseSpanishDate(text: string): string | null {
   const shortMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
   if (shortMatch) {
     const [, day, month, year] = shortMatch;
-    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toISOString();
+    return new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0)).toISOString();
   }
 
   return null;
