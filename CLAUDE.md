@@ -17,7 +17,7 @@ PromoCards SV es una web app privada que agrega las promociones de 6 bancos salv
 
 ## Branching
 
-- `main` = versión estable en producción (etiquetada `1.0v`)
+- `main` = versión estable en producción (etiquetada `2.0v`)
 - `develop` = rama de desarrollo para nuevos cambios
 - Los cambios en `develop` se integran a `main` vía Pull Request
 - El CI (`ci.yml`) corre automáticamente en cada PR hacia `main`
@@ -65,6 +65,29 @@ almacenes → repuestos-talleres → ferreterias → streaming → otros
 
 ---
 
+## Autenticación
+
+Implementada con Supabase Auth + `@supabase/ssr`. Soporta dos métodos:
+
+- **Email/contraseña**: `supabase.auth.signInWithPassword()` via Server Action en `apps/web/src/app/actions/auth.ts`
+- **Google OAuth**: `supabase.auth.signInWithOAuth({ provider: 'google' })` — requiere configuración en Supabase Dashboard → Authentication → Providers → Google
+
+### Variables necesarias para OAuth
+
+```env
+NEXT_PUBLIC_SITE_URL=https://tu-dominio.vercel.app   # (http://localhost:3000 en dev)
+```
+
+### Configuración en Supabase
+
+- **Authentication → Providers → Google**: habilitar con Client ID y Client Secret de Google Cloud Console
+- **Authentication → URL Configuration → Redirect URLs**: agregar `https://tu-dominio.vercel.app/auth/callback`
+- **Authentication → URL Configuration → Site URL**: poner la URL de producción
+
+El nombre del usuario autenticado se obtiene de `user.user_metadata.full_name` (Google) o `user.user_metadata.name`, con fallback a `user.email`.
+
+---
+
 ## Convenciones
 
 - **snake_case → camelCase**: Supabase devuelve `bank_id`, `category_id`, etc. El mapeo a tipos TypeScript (`bankId`, `categoryId`) se hace explícitamente en `apps/web/src/lib/queries.ts`
@@ -88,6 +111,9 @@ Para disparar scrapers manualmente: GitHub → Actions → Scrapers → Run work
 ## Próximos pasos sugeridos
 
 ### Funcionalidades
+- [x] **Google OAuth** — login con cuenta Google vía Supabase
+- [x] **Nombre de usuario** — mostrar nombre completo en headers del admin y dashboard
+- [x] **Tracking de scrapers** — registrar quién dispara cada scrape manual (`scraper_triggers`)
 - [ ] **Búsqueda de texto libre** en el dashboard (filtrar por texto en título/descripción)
 - [ ] **PWA / instalable** — agregar `manifest.json` y service worker para notificaciones push nativas
 - [ ] **Página de detalle de promo** — ruta `/promo/[id]` para compartir promos individualmente
