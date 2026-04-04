@@ -58,7 +58,14 @@ export default async function AdminLayout({
             </nav>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400 hidden sm:block">{user.email}</span>
+            <div className="hidden sm:flex flex-col items-end">
+              <span className="text-xs font-semibold text-gray-700 leading-none">
+                {user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email}
+              </span>
+              {(user.user_metadata?.full_name || user.user_metadata?.name) && (
+                <span className="text-xs text-gray-400 leading-none mt-0.5">{user.email}</span>
+              )}
+            </div>
             <LogoutButton />
           </div>
         </div>

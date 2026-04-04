@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/supabase/auth-guard";
+import { createClient } from "@/lib/supabase/server";
+import { logScraperTrigger } from "@/lib/queries";
 import type { BankId } from "@promocards/types";
 
 /**
@@ -47,6 +49,18 @@ export async function POST(request: NextRequest) {
       { error: `Error al disparar workflow: ${response.status} ${text}` },
       { status: 500 }
     );
+  }
+
+  // Registrar quién disparó el scrape
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    await logScraperTrigger({
+      userId: user.id,
+      userEmail: user.email ?? "",
+      userName: user.user_metadata?.full_name ?? user.user_metadata?.name ?? null,
+      bankId: bankId,
+    });
   }
 
   return NextResponse.json({

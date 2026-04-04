@@ -5,7 +5,7 @@
 import { CATEGORY_ORDER } from "@promocards/types";
 import type { CategoryId, BankId } from "@promocards/types";
 import { getServiceClient } from "./supabase/service";
-import type { AdminPromo, ScraperRun } from "./admin-api";
+import type { AdminPromo, ScraperRun, ScraperTrigger } from "./admin-api";
 import type { Promo, DashboardMetrics } from "@promocards/types";
 
 // ─── Dashboard público ────────────────────────────────────────────────────────
@@ -104,6 +104,35 @@ export async function getAdminPromosFromDB(bankId?: BankId): Promise<AdminPromo[
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data ?? []) as AdminPromo[];
+}
+
+export async function logScraperTrigger(trigger: {
+  userId: string;
+  userEmail: string;
+  userName: string | null;
+  bankId: string | null;
+}): Promise<void> {
+  const { error } = await getServiceClient()
+    .from("scraper_triggers")
+    .insert({
+      user_id: trigger.userId,
+      user_email: trigger.userEmail,
+      user_name: trigger.userName,
+      bank_id: trigger.bankId,
+    });
+
+  if (error) console.error("Error registrando scraper trigger:", error.message);
+}
+
+export async function getScraperTriggersFromDB(): Promise<ScraperTrigger[]> {
+  const { data, error } = await getServiceClient()
+    .from("scraper_triggers")
+    .select("*")
+    .order("triggered_at", { ascending: false })
+    .limit(50);
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ScraperTrigger[];
 }
 
 export async function moderatePromoDB(
