@@ -1,4 +1,4 @@
-# PromoCards SV — v1.0
+# PromoCards SV — v2.0
 
 Web app privada que consolida las promociones de 6 tarjetas de crédito salvadoreñas en un solo dashboard. Scrapers headless (Playwright) corren automáticamente 3 veces al día, clasifican las promos por categoría y las almacenan en Supabase.
 
@@ -69,6 +69,9 @@ NEXT_PUBLIC_SUPABASE_URL=https://<tu-proyecto>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-public-key>
 SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 
+# URL base de la app (para redirect de OAuth)
+NEXT_PUBLIC_SITE_URL=http://localhost:3000   # producción: https://tu-dominio.vercel.app
+
 # Scrape manual desde el panel admin (opcional)
 GITHUB_PAT=ghp_xxxxxxxxxxxx
 GITHUB_OWNER=tu-usuario
@@ -117,6 +120,16 @@ create table if not exists scraper_runs (
   error_message text,
   started_at    timestamptz not null,
   finished_at   timestamptz
+);
+
+-- Tabla de triggers manuales de scrapers (quién los disparó)
+create table if not exists scraper_triggers (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null,
+  user_email   text not null,
+  user_name    text,
+  bank_id      text,
+  triggered_at timestamptz default now()
 );
 ```
 
@@ -198,6 +211,10 @@ pnpm --filter @promocards/api exec tsx src/scrape.ts bac-credomatic
 2. Ejecutar el SQL de la sección anterior
 3. Habilitar Email Auth en **Authentication → Providers → Email**
 4. Crear el primer usuario en **Authentication → Users → Add user**
+5. *(Opcional)* Habilitar Google OAuth en **Authentication → Providers → Google** con Client ID y Client Secret de Google Cloud Console
+6. *(Si usas Google OAuth)* En **Authentication → URL Configuration**:
+   - **Site URL**: `https://tu-dominio.vercel.app`
+   - **Redirect URLs**: agregar `https://tu-dominio.vercel.app/auth/callback`
 
 ### Vercel (frontend + API)
 
@@ -209,7 +226,8 @@ pnpm --filter @promocards/api exec tsx src/scrape.ts bac-credomatic
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-GITHUB_PAT          ← para scrape manual desde el panel admin
+NEXT_PUBLIC_SITE_URL    ← URL de producción (para redirect de Google OAuth)
+GITHUB_PAT              ← para scrape manual desde el panel admin
 GITHUB_OWNER
 GITHUB_REPO
 ```
@@ -278,8 +296,9 @@ Las promos se clasifican automáticamente por palabras clave en `apps/api/src/sc
 | 4 | 🍽️ | Restaurantes |
 | 5 | 🏬 | Almacenes |
 | 6 | 🔧 | Repuestos y Talleres |
-| 7 | 🎬 | Streaming |
-| 8 | 📦 | Otros |
+| 7 | 🔨 | Ferreterías |
+| 8 | 🎬 | Streaming |
+| 9 | 📦 | Otros |
 
 ---
 
@@ -322,7 +341,7 @@ packages/
 
 ## Rama de desarrollo
 
-A partir de la versión `1.0v`, los cambios nuevos se desarrollan en la rama `develop` y se integran a `main` mediante Pull Request. La rama `main` representa siempre la versión estable en producción.
+Los cambios nuevos se desarrollan en la rama `develop` y se integran a `main` mediante Pull Request. La rama `main` representa siempre la versión estable en producción (actualmente `2.0v`).
 
 ```bash
 # Trabajar en un nuevo cambio
