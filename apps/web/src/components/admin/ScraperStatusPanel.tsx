@@ -1,5 +1,5 @@
 import { ScrapeButton } from "./ScrapeButton";
-import type { ScraperRun } from "@/lib/admin-api";
+import type { ScraperRun, ScraperTrigger } from "@/lib/admin-api";
 import type { BankId } from "@promocards/types";
 
 const BANK_NAMES: Record<BankId, string> = {
@@ -22,6 +22,7 @@ const ALL_BANKS: BankId[] = [
 
 interface Props {
   latestRuns: Partial<Record<BankId, ScraperRun>>;
+  latestTriggers: Partial<Record<string, ScraperTrigger>>;
 }
 
 function timeAgo(dateStr: string): string {
@@ -62,7 +63,7 @@ function StatusBadge({ status }: { status: ScraperRun["status"] | "never" }) {
   );
 }
 
-export function ScraperStatusPanel({ latestRuns }: Props) {
+export function ScraperStatusPanel({ latestRuns, latestTriggers }: Props) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       {/* Header */}
@@ -94,6 +95,9 @@ export function ScraperStatusPanel({ latestRuns }: Props) {
               <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
                 Error
               </th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Disparado por
+              </th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -104,6 +108,8 @@ export function ScraperStatusPanel({ latestRuns }: Props) {
                 run
                   ? Date.now() - new Date(run.started_at).getTime() > 6 * 60 * 60 * 1000
                   : true;
+
+              const trigger = latestTriggers[bankId] ?? latestTriggers["all"];
 
               return (
                 <tr key={bankId} className={`hover:bg-gray-50/50 transition-colors ${isStale ? "bg-amber-50/30" : ""}`}>
@@ -130,6 +136,18 @@ export function ScraperStatusPanel({ latestRuns }: Props) {
                       </span>
                     ) : (
                       <span className="text-gray-300">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 max-w-[160px]">
+                    {trigger ? (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-gray-700 font-medium truncate" title={trigger.user_email}>
+                          {trigger.user_name ?? trigger.user_email}
+                        </span>
+                        <span className="text-xs text-gray-400">{timeAgo(trigger.triggered_at)}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-300">Automático</span>
                     )}
                   </td>
                   <td className="px-4 py-4">

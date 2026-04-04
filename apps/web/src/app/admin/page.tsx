@@ -1,17 +1,29 @@
-import { getScraperRunsFromDB } from "@/lib/queries";
+import { getScraperRunsFromDB, getScraperTriggersFromDB } from "@/lib/queries";
 import { ScraperStatusPanel } from "@/components/admin/ScraperStatusPanel";
 import type { BankId } from "@promocards/types";
-import type { ScraperRun } from "@/lib/admin-api";
+import type { ScraperRun, ScraperTrigger } from "@/lib/admin-api";
 
 export default async function AdminPage() {
   let latestRuns: Partial<Record<BankId, ScraperRun>> = {};
+  let latestTriggers: Partial<Record<string, ScraperTrigger>> = {};
 
   try {
-    const runs = await getScraperRunsFromDB();
+    const [runs, triggers] = await Promise.all([
+      getScraperRunsFromDB(),
+      getScraperTriggersFromDB(),
+    ]);
+
     latestRuns = runs.reduce((acc, run) => {
       if (!acc[run.bank_id as BankId]) acc[run.bank_id as BankId] = run as ScraperRun;
       return acc;
     }, {} as Partial<Record<BankId, ScraperRun>>);
+
+    // Último trigger por banco (null bank_id = "todos los bancos")
+    latestTriggers = triggers.reduce((acc, t) => {
+      const key = t.bank_id ?? "all";
+      if (!acc[key]) acc[key] = t;
+      return acc;
+    }, {} as Partial<Record<string, ScraperTrigger>>);
   } catch {
     // Mostrar panel vacío si hay error
   }
@@ -26,7 +38,7 @@ export default async function AdminPage() {
         </p>
       </div>
 
-      <ScraperStatusPanel latestRuns={latestRuns} />
+      <ScraperStatusPanel latestRuns={latestRuns} latestTriggers={latestTriggers} />
     </div>
   );
 }

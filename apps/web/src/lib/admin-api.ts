@@ -34,6 +34,15 @@ export interface ScraperRun {
   finished_at: string | null;
 }
 
+export interface ScraperTrigger {
+  id: string;
+  user_id: string;
+  user_email: string;
+  user_name: string | null;
+  bank_id: string | null;
+  triggered_at: string;
+}
+
 // ─── Helper fetch (mismo origen — cookies automáticas) ────────────────────────
 
 async function apiFetch(path: string, options?: RequestInit) {

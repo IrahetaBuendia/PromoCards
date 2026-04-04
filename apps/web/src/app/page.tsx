@@ -9,6 +9,7 @@ import { NotificationButton } from "@/components/dashboard/NotificationButton";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
 import { FilterSidebar } from "@/components/dashboard/FilterSidebar";
 import type { Promo } from "@promocards/types";
+import { createClient } from "@/lib/supabase/server";
 
 const DAYS_ES = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
@@ -48,6 +49,10 @@ interface Props {
 export default async function DashboardPage({ searchParams }: Props) {
   const { categoria, banco, hoy } = await searchParams;
 
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const displayName = user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? user?.email ?? "";
+
   const [allPromos, fetchedPromos, metrics] = await Promise.all([
     getPromos(),
     getPromos({
@@ -81,6 +86,9 @@ export default async function DashboardPage({ searchParams }: Props) {
             <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-full whitespace-nowrap">
               🟢 {metrics.totalActivePromos} activas
             </span>
+            {displayName && (
+              <span className="text-xs text-gray-500 font-medium hidden sm:block">{displayName}</span>
+            )}
             <Link
               href="/admin"
               className="text-xs font-semibold text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors hidden sm:inline-flex"
