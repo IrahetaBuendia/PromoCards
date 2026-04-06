@@ -54,17 +54,19 @@ export function FilterSidebar() {
             </button>
           </div>
 
-          <AccordionSection title="Categoría" defaultOpen>
-            <Suspense><CategoryFilter vertical /></Suspense>
-          </AccordionSection>
+          <div className="overflow-y-auto max-h-[calc(100vh-8rem)]">
+            <AccordionSection title="Categoría" defaultOpen>
+              <Suspense><CategoryFilter vertical /></Suspense>
+            </AccordionSection>
 
-          <AccordionSection title="Banco" defaultOpen>
-            <Suspense><BankFilter vertical /></Suspense>
-          </AccordionSection>
+            <AccordionSection title="Banco" defaultOpen>
+              <Suspense><BankFilter vertical /></Suspense>
+            </AccordionSection>
 
-          <AccordionSection title="Fecha" defaultOpen>
-            <Suspense><TodayFilter /></Suspense>
-          </AccordionSection>
+            <AccordionSection title="Fecha" defaultOpen>
+              <Suspense><TodayFilter /></Suspense>
+            </AccordionSection>
+          </div>
         </aside>
       ) : (
         <button
