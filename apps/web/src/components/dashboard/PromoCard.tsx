@@ -8,6 +8,7 @@ const BANK_CONFIG: Record<BankId, { name: string; color: string; headerText: str
   "bac-credomatic":   { name: "BAC Credomatic",   color: "#dc2626", headerText: "#ffffff", badgeBg: "#fee2e2", badgeText: "#991b1b" },
   "credisiman":       { name: "Credisiman",       color: "#0002b8", headerText: "#ffffff", badgeBg: "#e0e7ff", badgeText: "#0002b8" },
   "banco-agricola":   { name: "Banco Agrícola",   color: "#facc00", headerText: "#713f12", badgeBg: "#fef9c3", badgeText: "#713f12" },
+  "banco-cuscatlan":  { name: "Banco Cuscatlán", color: "#00A3AD", headerText: "#ffffff", badgeBg: "#ccfeff", badgeText: "#006670" },
 };
 
 type CategoryIconComponent = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string; style?: React.CSSProperties }>;

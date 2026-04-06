@@ -5,6 +5,7 @@ import { credicomerScraper } from "./credicomer";
 import { bacCredomaticScraper } from "./bac-credomatic";
 import { credisimanScraper } from "./credisiman";
 import { bancoAgricolaScraper } from "./banco-agricola";
+import { bancoCuscatlanScraper } from "./banco-cuscatlan";
 import type { ScraperFn } from "./types";
 
 const scrapers: Record<BankId, ScraperFn> = {
@@ -14,6 +15,7 @@ const scrapers: Record<BankId, ScraperFn> = {
   "bac-credomatic": bacCredomaticScraper,
   credisiman: credisimanScraper,
   "banco-agricola": bancoAgricolaScraper,
+  "banco-cuscatlan": bancoCuscatlanScraper,
 };
 
 export async function runAllScrapers(): Promise<void> {

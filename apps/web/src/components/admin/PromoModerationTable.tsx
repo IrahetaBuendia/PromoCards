@@ -12,6 +12,7 @@ const BANK_NAMES: Record<BankId, string> = {
   "bac-credomatic": "BAC Credomatic",
   credisiman: "Credisiman",
   "banco-agricola": "Banco Agrícola",
+  "banco-cuscatlan": "Banco Cuscatlán",
 };
 
 const CATEGORY_LABELS: Record<CategoryId, string> = {
