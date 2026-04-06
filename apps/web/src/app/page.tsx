@@ -80,7 +80,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Suspense>
+            <Suspense fallback={null}>
               <NotificationButton promos={allPromos} />
             </Suspense>
             <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-full whitespace-nowrap">
@@ -112,7 +112,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         <div className="flex gap-5 items-start">
 
           {/* Sidebar con filtros */}
-          <Suspense>
+          <Suspense fallback={null}>
             <FilterSidebar />
           </Suspense>
 
