@@ -35,6 +35,7 @@ const ALL_BANKS: Array<{ value: string; label: string }> = [
   { value: "bac-credomatic", label: "BAC Credomatic" },
   { value: "credisiman", label: "Credisiman" },
   { value: "banco-agricola", label: "Banco Agrícola" },
+  { value: "banco-cuscatlan", label: "Banco Cuscatlán" },
 ];
 
 const ALL_CATEGORIES: Array<{ value: string; label: string }> = [

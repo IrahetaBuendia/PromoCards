@@ -10,7 +10,7 @@ const BANK_CONFIG: Record<BankId, { name: string; badge: string; accent: string 
   "bac-credomatic":   { name: "BAC Credomatic",   badge: "bg-green-100 text-green-800",   accent: "bg-green-600" },
   "credisiman":       { name: "Credisiman",       badge: "bg-purple-100 text-purple-800", accent: "bg-purple-600" },
   "banco-agricola":   { name: "Banco Agrícola",   badge: "bg-teal-100 text-teal-800",     accent: "bg-teal-600" },
-  "banco-cuscatlan":  { name: "Banco Cuscatlán",  badge: "bg-cyan-100 text-cyan-800",      accent: "bg-cyan-600" },
+  "banco-cuscatlan":  { name: "Banco Cuscatlán",  badge: "bg-sky-100 text-sky-900",        accent: "bg-[#01426a]" },
 };
 
 const CATEGORY_ICONS: Record<CategoryId, string> = {

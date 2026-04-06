@@ -18,7 +18,7 @@ const BANKS: Array<{
   { id: "bac-credomatic",   label: "BAC Credomatic",   color: "#fee2e2", textColor: "#991b1b", activeBg: "#dc2626", activeText: "#ffffff" },
   { id: "credisiman",       label: "Credisiman",       color: "#e0e7ff", textColor: "#0002b8", activeBg: "#0002b8", activeText: "#ffffff" },
   { id: "banco-agricola",   label: "Banco Agrícola",   color: "#fef9c3", textColor: "#713f12", activeBg: "#facc00", activeText: "#713f12" },
-  { id: "banco-cuscatlan",  label: "Banco Cuscatlán",  color: "#ccfeff", textColor: "#006670", activeBg: "#00A3AD", activeText: "#ffffff" },
+  { id: "banco-cuscatlan",  label: "Banco Cuscatlán",  color: "#dceef5", textColor: "#01426a", activeBg: "#01426a", activeText: "#ffffff" },
 ];
 
 export function BankFilter({ vertical = false }: { vertical?: boolean }) {
