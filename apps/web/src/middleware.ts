@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 // Rutas públicas que no requieren autenticación
-const PUBLIC_PATHS = ["/login", "/auth/callback"];
+const PUBLIC_PATHS = ["/login", "/auth/callback", "/api/promos"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
