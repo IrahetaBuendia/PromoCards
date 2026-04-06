@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import type { CategoryId, BankId } from "@promocards/types";
+import type { CategoryId, BankId } from "../lib/types";
 import {
   BANK_COLORS,
   BANK_NAMES,

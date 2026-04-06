@@ -1,0 +1,26 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "preview": {
+      "android": {
+        "buildType": "apk",
+        "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://promo-cards-web.vercel.app"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle",
+        "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://promo-cards-web.vercel.app"
+      }
+    }
+  }
+}

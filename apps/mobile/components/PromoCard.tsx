@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Image } from "expo-image";
-import type { Promo } from "@promocards/types";
+import type { Promo } from "../lib/types";
 import { BANK_COLORS, BANK_NAMES, CATEGORY_ICONS, CATEGORY_LABELS } from "../lib/constants";
 
 interface PromoCardProps {

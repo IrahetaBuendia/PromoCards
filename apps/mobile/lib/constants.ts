@@ -1,5 +1,5 @@
-import type { BankId, CategoryId } from "@promocards/types";
-import { CATEGORY_ORDER } from "@promocards/types";
+import type { BankId, CategoryId } from "./types";
+import { CATEGORY_ORDER } from "./types";
 
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ?? "https://tu-dominio.vercel.app";

@@ -1,4 +1,4 @@
-import type { Promo, DashboardMetrics, CategoryId, BankId } from "@promocards/types";
+import type { Promo, DashboardMetrics, CategoryId, BankId } from "./types";
 import { API_BASE_URL } from "./constants";
 
 export async function fetchPromos(filters?: {
