@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "PromoCards SV",
+    "slug": "promocards-sv",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "promocards",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "package": "sv.promocards.app"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "sv.promocards.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
