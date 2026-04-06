@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import type { DashboardMetrics } from "@promocards/types";
+import type { DashboardMetrics } from "../lib/types";
 
 interface MetricsPanelProps {
   metrics: DashboardMetrics;
