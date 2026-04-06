@@ -6,7 +6,7 @@ Contexto e instrucciones para Claude Code en este proyecto.
 
 ## Qué es este proyecto
 
-PromoCards SV es una web app privada que agrega las promociones de 6 bancos salvadoreños en un dashboard unificado. El stack es:
+PromoCards SV es una web app privada que agrega las promociones de 7 bancos salvadoreños en un dashboard unificado. El stack es:
 
 - **Frontend**: Next.js 15 (App Router) + Tailwind CSS — desplegado en Vercel
 - **Scrapers**: Playwright headless — corren en GitHub Actions 3x/día
@@ -45,6 +45,7 @@ Cada banco tiene su propio archivo en `apps/api/src/scrapers/`. Cada scraper:
 | BAC Credomatic | Paginado `?page=N` | Detectar fin con `.pager__link--next` ausente; MAX_PAGES=20 |
 | Fedecrédito | DOM directo | Navega a cada promo individual para descripción completa |
 | Banco Industrial | DOM + lazy-load | Scroll antes de extraer; imágenes en `data-lazy-src` |
+| Banco Cuscatlán | Angular SPA — DOM post-render | Selector `.square-promotion`; tipo oferta en `p.container-offer`; imagen en `img.img-background-promotion`; waitUntil `networkidle` + 3s extra para Angular |
 
 ---
 
@@ -102,7 +103,7 @@ El nombre del usuario autenticado se obtiene de `user.user_metadata.full_name` (
 |---|---|---|
 | `ci.yml` | PR → `main` | type-check + lint + build |
 | `deploy.yml` | push a `main` | deploy a Vercel producción |
-| `scraper.yml` | cron 7am/12pm/6pm SV + manual | corre los 6 scrapers |
+| `scraper.yml` | cron 7am/12pm/6pm SV + manual | corre los 7 scrapers |
 
 Para disparar scrapers manualmente: GitHub → Actions → Scrapers → Run workflow.
 
@@ -121,6 +122,7 @@ Para disparar scrapers manualmente: GitHub → Actions → Scrapers → Run work
 - [ ] **Filtro por fecha de vencimiento** — slider de días restantes
 
 ### Scrapers
+- [x] **Banco Cuscatlán** — Angular SPA scrapeada con selector `.square-promotion`
 - [ ] **Más bancos** — Banco Hipotecario, Scotiabank, Davivienda
 - [ ] **Alertas de error por email** — notificar cuando un scraper falla más de 2 veces seguidas
 - [ ] **Historial de promos** — en vez de borrar y reinsertar, marcar promos antiguas como `is_active = false`
