@@ -6,7 +6,8 @@ export type BankId =
   | "credicomer"
   | "bac-credomatic"
   | "credisiman"
-  | "banco-agricola";
+  | "banco-agricola"
+  | "banco-cuscatlan";
 
 export interface Bank {
   id: BankId;

@@ -9,6 +9,7 @@ const BANK_NAMES: Record<BankId, string> = {
   "bac-credomatic": "BAC Credomatic",
   credisiman: "Credisiman",
   "banco-agricola": "Banco Agrícola",
+  "banco-cuscatlan": "Banco Cuscatlán",
 };
 
 const ALL_BANKS: BankId[] = [
@@ -18,6 +19,7 @@ const ALL_BANKS: BankId[] = [
   "bac-credomatic",
   "credisiman",
   "banco-agricola",
+  "banco-cuscatlan",
 ];
 
 interface Props {
