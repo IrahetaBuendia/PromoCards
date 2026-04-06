@@ -1,6 +1,6 @@
-# PromoCards SV — v2.0
+# PromoCards SV — v2.2
 
-Web app privada que consolida las promociones de 7 tarjetas de crédito salvadoreñas en un solo dashboard. Scrapers headless (Playwright) corren automáticamente 3 veces al día, clasifican las promos por categoría y las almacenan en Supabase.
+Web app y app Android que consolida las promociones de 7 tarjetas de crédito salvadoreñas en un solo dashboard. Scrapers headless (Playwright) corren automáticamente 3 veces al día, clasifican las promos por categoría y las almacenan en Supabase.
 
 ---
 
@@ -24,7 +24,8 @@ Web app privada que consolida las promociones de 7 tarjetas de crédito salvador
 promocards-sv/                  ← monorepo (pnpm workspaces + Turborepo)
 ├── apps/
 │   ├── api/                    ← Scrapers Playwright (GitHub Actions)
-│   └── web/                    ← Next.js 15 + Tailwind (Vercel)
+│   ├── web/                    ← Next.js 15 + Tailwind (Vercel)
+│   └── mobile/                 ← Expo SDK 54 + React Native 0.81 (Android)
 └── packages/
     └── types/                  ← Tipos TypeScript compartidos
 ```
@@ -46,10 +47,11 @@ promocards-sv/                  ← monorepo (pnpm workspaces + Turborepo)
 ```
 
 - **Frontend + API**: Next.js 15 (App Router + Route Handlers) — Vercel
+- **App mobile**: Expo SDK 54 + Expo Router 6 + React Native 0.81 — APK via EAS Build
 - **Scrapers**: GitHub Actions (cron + workflow_dispatch)
 - **Base de datos + Auth**: Supabase (gratuito)
 
-**100% sin costo** — Vercel hobby + Supabase free + GitHub Actions gratis.
+**100% sin costo** — Vercel hobby + Supabase free + GitHub Actions gratis + EAS Build free tier.
 
 ---
 
@@ -77,6 +79,12 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000   # producción: https://tu-dominio.v
 GITHUB_PAT=ghp_xxxxxxxxxxxx
 GITHUB_OWNER=tu-usuario
 GITHUB_REPO=promocards-sv
+```
+
+### `apps/mobile/.env` (app Android)
+
+```env
+EXPO_PUBLIC_API_URL=https://promo-cards-web.vercel.app
 ```
 
 ### `.env` raíz (solo para scrapers en local)
@@ -159,7 +167,18 @@ pnpm --filter @promocards/web dev
 # → http://localhost:3000
 ```
 
-### 4. Correr scrapers manualmente en local
+### 4. Levantar la app mobile (opcional)
+
+```bash
+# Crear apps/mobile/.env con:
+# EXPO_PUBLIC_API_URL=https://promo-cards-web.vercel.app
+
+cd apps/mobile
+pnpm dev
+# Escanear el QR con Expo Go en Android
+```
+
+### 5. Correr scrapers manualmente en local
 
 ```bash
 # Todos los bancos
@@ -175,10 +194,24 @@ pnpm --filter @promocards/api exec tsx src/scrape.ts bac-credomatic
 
 | Comando | Descripción |
 |---|---|
-| `pnpm --filter @promocards/web dev` | Levanta el frontend con hot-reload |
+| `pnpm --filter @promocards/web dev` | Levanta el frontend web con hot-reload |
+| `pnpm --filter @promocards/mobile dev` | Levanta el servidor Expo (mobile) |
 | `pnpm build` | Compila todos los paquetes |
 | `pnpm lint` | ESLint en todos los paquetes |
 | `pnpm type-check` | Verifica tipos TypeScript |
+
+---
+
+## Build APK (Android)
+
+```bash
+npm install -g eas-cli
+eas login
+
+cd apps/mobile
+eas build --platform android --profile preview
+# → Genera APK descargable desde expo.dev (~10 min)
+```
 
 ---
 
@@ -334,6 +367,23 @@ apps/
       lib/
         queries.ts          ← Funciones Supabase (server components)
         supabase/           ← Clientes browser, server, service, auth-guard
+  mobile/
+    app/
+      (tabs)/         ← Tab bar: Promos | Stats
+        index.tsx     ← Lista de promos con filtros
+        metrics.tsx   ← Panel de métricas
+      promo/[id].tsx  ← Detalle de promo
+      _layout.tsx     ← Root layout + QueryClientProvider
+    components/
+      PromoCard.tsx   ← Tarjeta de promo
+      FilterBar.tsx   ← Filtros por banco/categoría
+      MetricsPanel.tsx
+    lib/
+      api.ts          ← fetchPromos(), fetchMetrics()
+      constants.ts    ← Colores de banco, labels, iconos
+      types.ts        ← Tipos copiados de @promocards/types
+    assets/           ← icon.png, adaptive-icon.png, splash.png
+    eas.json          ← Perfiles EAS Build (preview=APK, production=AAB)
 packages/
   types/
     src/index.ts      ← BankId, CategoryId, Promo, ScraperRun, etc.
