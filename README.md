@@ -1,6 +1,6 @@
 # PromoCards SV — v2.0
 
-Web app privada que consolida las promociones de 6 tarjetas de crédito salvadoreñas en un solo dashboard. Scrapers headless (Playwright) corren automáticamente 3 veces al día, clasifican las promos por categoría y las almacenan en Supabase.
+Web app privada que consolida las promociones de 7 tarjetas de crédito salvadoreñas en un solo dashboard. Scrapers headless (Playwright) corren automáticamente 3 veces al día, clasifican las promos por categoría y las almacenan en Supabase.
 
 ---
 
@@ -14,6 +14,7 @@ Web app privada que consolida las promociones de 6 tarjetas de crédito salvador
 | BAC Credomatic | baccredomatic.com/es-sv/personas/promociones |
 | Credisiman | credisiman.com/promotion/SV |
 | Banco Agrícola | bancoagricola.com/promociones |
+| Banco Cuscatlán | bancocuscatlan.com/tarjetas/promociones |
 
 ---
 
@@ -266,7 +267,7 @@ El repositorio tiene tres workflows:
 
 - **Disparo automático**: cron `0 0,13,18 * * *` (UTC) = **7am, 12pm y 6pm hora El Salvador (UTC-6)**
 - **Disparo manual**: desde GitHub UI (Actions → Scrapers → Run workflow) o desde el panel admin de la app
-- **Input opcional**: `bank_id` para scrapear solo un banco (dejar vacío = todos)
+- **Input opcional**: `bank_id` para scrapear solo un banco (dejar vacío = todos los 7)
 - **Qué hace**: instala Playwright + Chromium → corre `scrape.ts` → guarda en Supabase
 
 #### Flujo completo de un cambio
@@ -311,6 +312,7 @@ apps/
       scrapers/       ← Un archivo por banco + clasificador por keywords
         types.ts      ← detectCategory(), detectDiscountType(), parseSpanishDate()
         banco-agricola.ts
+        banco-cuscatlan.ts
         banco-industrial.ts
         bac-credomatic.ts
         credicomer.ts
