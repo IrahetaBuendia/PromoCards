@@ -62,6 +62,7 @@ export async function savePromos(promos: RawPromo[]): Promise<void> {
       expires_at: p.expiresAt,
       image_url: p.imageUrl,
       source_url: p.sourceUrl,
+      is_active: true,
       updated_at: new Date().toISOString(),
     }))
   );
