@@ -4,10 +4,20 @@
     "slug": "promocards-sv",
     "version": "0.1.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "scheme": "promocards",
     "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1e3a8a"
+    },
     "android": {
-      "package": "sv.promocards.app"
+      "package": "sv.promocards.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1e3a8a"
+      }
     },
     "ios": {
       "supportsTablet": true,
