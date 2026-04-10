@@ -11,6 +11,73 @@ import { savePromos, logScraperRun } from "../lib/db";
 const BANK_ID = "credisiman" as const;
 const BASE_URL = "https://www.credisiman.com";
 const LIST_URL = `${BASE_URL}/promotion/SV`;
+const MAX_API_PAGES = 30;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractApiItems(json: any): any[] {
+  if (Array.isArray(json)) return json;
+  if (Array.isArray(json?.response?.content)) return json.response.content;
+  if (Array.isArray(json?.data)) return json.data;
+  if (Array.isArray(json?.content)) return json.content;
+  if (Array.isArray(json?.promotions)) return json.promotions;
+  if (Array.isArray(json?.response)) return json.response;
+  return [];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractTotalPages(json: any): number | null {
+  const root = json?.response ?? json;
+  const candidates = [root?.totalPages, root?.total_pages, root?.pages, root?.lastPage];
+  for (const value of candidates) {
+    const n = Number(value);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return null;
+}
+
+function extractPageFromUrl(url: string): number {
+  try {
+    const parsed = new URL(url);
+    const page = parsed.searchParams.get("page") ?? parsed.searchParams.get("pageNumber");
+    const n = Number(page);
+    return Number.isFinite(n) ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function buildPageUrl(url: string, pageNumber: number): string {
+  const parsed = new URL(url);
+  if (parsed.searchParams.has("page")) parsed.searchParams.set("page", String(pageNumber));
+  else if (parsed.searchParams.has("pageNumber")) parsed.searchParams.set("pageNumber", String(pageNumber));
+  else parsed.searchParams.set("page", String(pageNumber));
+  return parsed.toString();
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildPagedPostData(postData: string | null, pageNumber: number): any {
+  if (!postData) return undefined;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const body: any = JSON.parse(postData);
+
+    if (typeof body.page === "number" || typeof body.page === "string") body.page = pageNumber;
+    else if (typeof body.pageNumber === "number" || typeof body.pageNumber === "string") body.pageNumber = pageNumber;
+    else if (typeof body.number === "number" || typeof body.number === "string") body.number = pageNumber;
+    else if (body.pageable && typeof body.pageable === "object") {
+      if ("page" in body.pageable) body.pageable.page = pageNumber;
+      else if ("pageNumber" in body.pageable) body.pageable.pageNumber = pageNumber;
+      else body.pageable.page = pageNumber;
+    } else {
+      body.page = pageNumber;
+    }
+
+    return body;
+  } catch {
+    return postData;
+  }
+}
 
 export async function credisimanScraper(): Promise<void> {
   const startedAt = new Date().toISOString();
@@ -28,6 +95,9 @@ export async function credisimanScraper(): Promise<void> {
     // Interceptar API de Credisiman (ingress-prd.credisiman.com)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const apiPromos: any[] = [];
+    let pagedEndpoint: { url: string; method: string; postData: string | null } | null = null;
+    let initialTotalPages: number | null = null;
+
     page.on("response", async (response) => {
       const url = response.url();
       if (
@@ -40,12 +110,16 @@ export async function credisimanScraper(): Promise<void> {
           const contentType = response.headers()["content-type"] ?? "";
           if (contentType.includes("application/json")) {
             const json = await response.json();
-            if (Array.isArray(json)) apiPromos.push(...json);
-            else if (Array.isArray(json?.response?.content)) apiPromos.push(...json.response.content);
-            else if (Array.isArray(json?.data)) apiPromos.push(...json.data);
-            else if (Array.isArray(json?.content)) apiPromos.push(...json.content);
-            else if (Array.isArray(json?.promotions)) apiPromos.push(...json.promotions);
-            else if (Array.isArray(json?.response)) apiPromos.push(...json.response);
+            apiPromos.push(...extractApiItems(json));
+
+            if (url.includes("/cards/promotions/paged") && !pagedEndpoint) {
+              pagedEndpoint = {
+                url,
+                method: response.request().method(),
+                postData: response.request().postData(),
+              };
+              initialTotalPages = extractTotalPages(json);
+            }
           }
         } catch { /* ignorar */ }
       }
@@ -53,6 +127,62 @@ export async function credisimanScraper(): Promise<void> {
 
     await page.goto(LIST_URL, { waitUntil: "networkidle", timeout: 30_000 });
     await page.waitForSelector(".card-item", { timeout: 15_000 });
+    await page.waitForTimeout(1_500);
+
+    if (apiPromos.length > 0) {
+      const endpoint = pagedEndpoint as { url: string; method: string; postData: string | null } | null;
+      if (!endpoint) {
+        // Si no detectamos endpoint paginado, seguimos con lo capturado inicialmente.
+      } else {
+      const seenIds = new Set(
+        apiPromos
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((item: any) => item?.id)
+          .filter((id: unknown): id is string | number => id !== undefined && id !== null)
+      );
+
+      const firstPage = extractPageFromUrl(endpoint.url);
+      const maxPagesToFetch = initialTotalPages
+        ? Math.min(initialTotalPages, MAX_API_PAGES)
+        : MAX_API_PAGES;
+
+      for (let pageNumber = firstPage + 1; pageNumber < maxPagesToFetch; pageNumber++) {
+        try {
+          const url = buildPageUrl(endpoint.url, pageNumber);
+
+          const response = await page.request.fetch(url, {
+            method: endpoint.method,
+            data: buildPagedPostData(endpoint.postData, pageNumber),
+            timeout: 30_000,
+          });
+
+          if (!response.ok()) break;
+
+          const json = await response.json();
+          const items = extractApiItems(json);
+          if (items.length === 0) break;
+
+          let added = 0;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          for (const item of items as any[]) {
+            const itemId = item?.id;
+            if (itemId !== undefined && itemId !== null) {
+              if (seenIds.has(itemId)) continue;
+              seenIds.add(itemId);
+            }
+            apiPromos.push(item);
+            added++;
+          }
+
+          console.log(`[${BANK_ID}] Pagina ${pageNumber}: +${added} items (total ${apiPromos.length})`);
+
+          if (!initialTotalPages && added === 0) break;
+        } catch {
+          break;
+        }
+      }
+      }
+    }
 
     // Si la API interceptada tiene datos, usarlos directamente
     if (apiPromos.length > 0) {
