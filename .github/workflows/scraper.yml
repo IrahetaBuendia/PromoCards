@@ -14,14 +14,51 @@ on:
         default: ""
         type: string
 
+permissions:
+  contents: read
+
 jobs:
-  scrape:
-    name: Correr scrapers
+  select-banks:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      banks: ${{ steps.select.outputs.banks }}
+    steps:
+      - id: select
+        env:
+          BANK_ID: ${{ inputs.bank_id }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const banks = ['fedecredito', 'banco-industrial', 'credicomer', 'bac-credomatic', 'credisiman', 'banco-agricola', 'banco-cuscatlan'];
+          const requested = process.env.BANK_ID || '';
+          if (requested && !banks.includes(requested)) {
+            throw new Error(`Banco no soportado: ${requested}`);
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `banks=${JSON.stringify(requested ? [requested] : banks)}\n`);
+          NODE
+
+  scrape:
+    name: Scraper ${{ matrix.bank }}
+    needs: select-banks
+    strategy:
+      fail-fast: false
+      matrix:
+        bank: ${{ fromJSON(needs.select-banks.outputs.banks) }}
+    runs-on: ${{ matrix.bank == 'fedecredito' && fromJSON('["promocards-fedecredito"]') || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    concurrency:
+      group: scraper-${{ matrix.bank }}
+      cancel-in-progress: false
+    defaults:
+      run:
+        shell: ${{ matrix.bank == 'fedecredito' && 'powershell' || 'bash' }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -35,12 +72,12 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
-      # ubuntu-latest tiene todas las dependencias de sistema para Chromium
       - name: Instalar Chromium (Playwright)
         run: pnpm --filter @promocards/api exec playwright install --with-deps chromium
 
       - name: Correr scrapers
-        run: pnpm --filter @promocards/api exec tsx src/scrape.ts ${{ inputs.bank_id }}
+        run: pnpm --filter @promocards/api exec tsx src/scrape.ts
         env:
+          BANK_ID: ${{ matrix.bank }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
