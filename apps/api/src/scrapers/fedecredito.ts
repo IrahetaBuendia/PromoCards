@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { chromium, errors } from "playwright";
 import {
   detectCategory,
   detectDiscountType,
@@ -17,7 +17,7 @@ export async function fedecreditoScraper(): Promise<void> {
 
   try {
     const page = await browser.newPage();
-    await page.goto(LIST_URL, { waitUntil: "networkidle", timeout: 30_000 });
+    await page.goto(LIST_URL, { waitUntil: "domcontentloaded", timeout: 60_000 });
     await page.waitForSelector('a[href*="/promociones/ver/"]', { timeout: 15_000 });
 
     // La página de lista ya contiene la descripción completa en los <p>
@@ -84,7 +84,7 @@ export async function fedecreditoScraper(): Promise<void> {
       bankId: BANK_ID,
       status: "error",
       promosFound: 0,
-      errorType: message.includes("timeout") ? "timeout" : "selector-broken",
+      errorType: error instanceof errors.TimeoutError ? "timeout" : "selector-broken",
       errorMessage: message,
       startedAt,
     });
