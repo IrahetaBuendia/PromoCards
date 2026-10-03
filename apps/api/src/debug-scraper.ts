@@ -42,7 +42,7 @@ async function debugBI() {
 async function debugFedecredito() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
-  await page.goto("https://www.fedecredito.com.sv/promociones/todas", { waitUntil: "networkidle", timeout: 30_000 });
+  await page.goto("https://www.fedecredito.com.sv/promociones/todas", { waitUntil: "domcontentloaded", timeout: 60_000 });
   await page.waitForSelector('a[href*="/promociones/ver/"]', { timeout: 15_000 });
 
   const summaries = await page.$$eval('a[href*="/promociones/ver/"]', (links) =>
