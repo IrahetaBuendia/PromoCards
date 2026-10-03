@@ -7,6 +7,7 @@ propias promociones; el workflow no invoca la limpieza global de la tabla.
 
 El runner se instala en `%LOCALAPPDATA%\PromoCardsRunner` y utiliza una copia de
 trabajo independiente en `_work`, sin modificar el checkout de desarrollo.
+Usa Node.js 20 o superior instalado en la PC y disponible en `PATH`.
 El acceso directo `PromoCards Fedecredito Runner.lnk` de la carpeta Inicio del
 usuario ejecuta `start-fedecredito-runner.ps1` de forma oculta al iniciar sesión.
 La PC debe permanecer encendida, conectada a Internet y con la sesión iniciada;
