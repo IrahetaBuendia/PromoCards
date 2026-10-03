@@ -2,11 +2,6 @@ name: Fedecredito diagnostics
 
 on:
   workflow_dispatch:
-  push:
-    branches: [develop]
-    paths:
-      - .github/workflows/fedecredito-diagnostics.yml
-      - apps/api/src/diagnose-fedecredito.mjs
 
 permissions:
   contents: read
@@ -14,6 +9,7 @@ permissions:
 jobs:
   diagnose:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}

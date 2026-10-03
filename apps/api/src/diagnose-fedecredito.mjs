@@ -34,10 +34,13 @@ try {
     console.log("DOM_READY");
   } catch (error) {
     console.error("NAVIGATION_ERROR", error.message);
+    process.exitCode = 1;
   }
   console.log("PAGE_URL", page.url());
   if (page.url() !== "about:blank") {
-    console.log("PROMO_LINKS", await page.locator('a[href*="/promociones/ver/"]').count());
+    const promoCount = await page.locator('a[href*="/promociones/ver/"]').count();
+    console.log("PROMO_LINKS", promoCount);
+    if (promoCount === 0) process.exitCode = 1;
   }
   console.log("PENDING_REQUESTS", [...pending]);
 } finally {
