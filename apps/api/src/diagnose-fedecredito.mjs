@@ -36,7 +36,9 @@ try {
     console.error("NAVIGATION_ERROR", error.message);
   }
   console.log("PAGE_URL", page.url());
-  console.log("PROMO_LINKS", await page.locator('a[href*="/promociones/ver/"]').count());
+  if (page.url() !== "about:blank") {
+    console.log("PROMO_LINKS", await page.locator('a[href*="/promociones/ver/"]').count());
+  }
   console.log("PENDING_REQUESTS", [...pending]);
 } finally {
   await browser.close();
