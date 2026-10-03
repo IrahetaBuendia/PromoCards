@@ -88,6 +88,7 @@ export async function fedecreditoScraper(): Promise<void> {
       errorMessage: message,
       startedAt,
     });
+    throw error;
   } finally {
     await browser.close();
   }
