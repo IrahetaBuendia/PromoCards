@@ -37,7 +37,7 @@ export function EditPromoModal({ promo, onClose, onSaved }: Props) {
     try {
       const updated = await moderatePromo(promo.id, {
         title: title.trim(),
-        description: description.trim() || undefined,
+        description: description.trim() || null,
         categoryId,
         isActive,
       });

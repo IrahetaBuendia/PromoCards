@@ -87,7 +87,7 @@ export async function getAdminPromos(): Promise<AdminPromo[]> {
 export interface ModeratePayload {
   categoryId?: CategoryId;
   title?: string;
-  description?: string;
+  description?: string | null;
   isActive?: boolean;
 }
 

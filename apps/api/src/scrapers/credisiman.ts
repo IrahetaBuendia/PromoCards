@@ -81,9 +81,10 @@ function buildPagedPostData(postData: string | null, pageNumber: number): any {
 
 export async function credisimanScraper(): Promise<void> {
   const startedAt = new Date().toISOString();
-  const browser = await chromium.launch({ headless: true });
+  let browser: import("playwright").Browser | undefined;
 
   try {
+    browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
 
     await page.setExtraHTTPHeaders({
@@ -300,7 +301,6 @@ export async function credisimanScraper(): Promise<void> {
     await detailPage.close();
 
     const rawPromos: RawPromo[] = baseItems
-      .filter((item) => item.title.length > 0)
       .map((item, i) => {
         const detail = enriched[i] ?? { description: null, rawText: "" };
         const description = detail.description;
@@ -316,7 +316,7 @@ export async function credisimanScraper(): Promise<void> {
           imageUrl: item.imageUrl,
           sourceUrl: item.href ?? `${LIST_URL}#${item.slug}`,
         } satisfies RawPromo;
-      });
+      }).filter((item) => item.title.length > 0);
 
     await savePromos(rawPromos);
     await logScraperRun({
@@ -335,11 +335,12 @@ export async function credisimanScraper(): Promise<void> {
       bankId: BANK_ID,
       status: "error",
       promosFound: 0,
-      errorType: message.includes("timeout") ? "timeout" : "ip-blocked",
+      errorType: /timeout/i.test(message) ? "timeout" : "ip-blocked",
       errorMessage: message,
       startedAt,
     });
+    throw error;
   } finally {
-    await browser.close();
+    await browser?.close();
   }
 }

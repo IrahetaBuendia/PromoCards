@@ -43,9 +43,10 @@ async function scrapePage(page: import("playwright").Page, pageUrl: string) {
 
 export async function bacCredomaticScraper(): Promise<void> {
   const startedAt = new Date().toISOString();
-  const browser = await chromium.launch({ headless: true });
+  let browser: import("playwright").Browser | undefined;
 
   try {
+    browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     const allRawItems: Array<{
       title: string; description: string | null; validityText: string;
@@ -108,11 +109,12 @@ export async function bacCredomaticScraper(): Promise<void> {
       bankId: BANK_ID,
       status: "error",
       promosFound: 0,
-      errorType: message.includes("timeout") ? "timeout" : "selector-broken",
+      errorType: /timeout/i.test(message) ? "timeout" : "selector-broken",
       errorMessage: message,
       startedAt,
     });
+    throw error;
   } finally {
-    await browser.close();
+    await browser?.close();
   }
 }

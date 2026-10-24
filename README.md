@@ -186,7 +186,23 @@ pnpm --filter @promocards/api exec tsx src/scrape.ts
 
 # Un banco específico
 pnpm --filter @promocards/api exec tsx src/scrape.ts bac-credomatic
+
+# Diagnóstico de todos los bancos sin escribir en Supabase
+pnpm --filter @promocards/api exec tsx src/scrape.ts --dry-run
+
+# Diagnóstico de un banco sin escribir en Supabase
+pnpm --filter @promocards/api exec tsx src/scrape.ts bac-credomatic --dry-run
 ```
+
+El modo `--dry-run` consulta los sitios reales y omite tanto el guardado de
+promociones como el historial de ejecuciones. Si falla cualquier banco, el proceso
+termina con código de error e identifica los bancos afectados.
+
+En una ejecución normal, cada banco guarda mediante upsert por `(bank_id,
+source_url)` y elimina registros obsoletos únicamente después de guardar los
+nuevos. Conserva los IDs, la fecha de creación y las desactivaciones manuales;
+los títulos, descripciones y categorías se actualizan desde la fuente. Una
+extracción vacía se considera un error y conserva los datos anteriores.
 
 ---
 
@@ -199,6 +215,24 @@ pnpm --filter @promocards/api exec tsx src/scrape.ts bac-credomatic
 | `pnpm build` | Compila todos los paquetes |
 | `pnpm lint` | ESLint en todos los paquetes |
 | `pnpm type-check` | Verifica tipos TypeScript |
+| `pnpm --filter @promocards/api test` | Pruebas de guardado, errores, métricas y fechas con servicios simulados |
+
+### Verificación funcional y diagnóstico
+
+La [revisión funcional del 23 de octubre de 2026](docs/revision-funcional-2026-10-23.md)
+documenta el fallo de instalación de Chromium, las correcciones y sus límites.
+Pasaron ocho pruebas funcionales nuevas, la revisión de tipos del monorepo y el
+build de producción de la web. La extracción real en modo diagnóstico obtuvo
+207 promociones únicas entre los siete bancos, sin modificar Supabase.
+
+La API web devuelve promociones activas sin vencimiento o todavía vigentes.
+Las métricas comparan porcentajes numéricamente y cuentan los vencimientos
+próximos sobre ese mismo conjunto. Las fechas en español extraídas por los
+scrapers vencen al final del día de El Salvador; el parser sigue siendo
+heurístico y requiere comprobar las condiciones de cada fuente.
+
+Pendiente conocido: `pnpm lint` falla por falta de configuración de ESLint 9 en
+API y mobile. La compilación web y el type-check no sustituyen esta comprobación.
 
 ---
 
@@ -287,7 +321,7 @@ El repositorio tiene tres workflows:
 ### `ci.yml` — Integración continua
 
 - **Disparo**: en cada Pull Request hacia `main`
-- **Qué hace**: build de tipos compartidos → type-check → lint
+- **Qué hace**: build de tipos compartidos → type-check → lint → tests
 - **Efecto**: bloquea el merge si algún paso falla
 
 ### `deploy.yml` — Deploy automático
@@ -302,6 +336,14 @@ El repositorio tiene tres workflows:
 - **Disparo manual**: desde GitHub UI (Actions → Scrapers → Run workflow) o desde el panel admin de la app
 - **Input opcional**: `bank_id` para scrapear solo un banco (dejar vacío = todos los 7)
 - **Qué hace**: instala Playwright + Chromium → corre `scrape.ts` → guarda en Supabase
+- **Runners**: seis bancos usan Ubuntu 24.04; Fedecrédito usa el runner Windows con etiqueta `promocards-fedecredito`, que debe permanecer conectado.
+- **Compatibilidad**: Ubuntu está fijado explícitamente porque la versión instalada de Playwright falla con Chromium en Ubuntu 26.04; no cambiar a `ubuntu-latest` sin verificarlo.
+- **Aislamiento**: un job por banco, sin cancelar los demás si alguno falla, y con concurrencia limitada por banco.
+- **Rama**: el workflow de scraping solo ejecuta sus jobs en `main`. Subir cambios a `develop` no actualiza producción ni ejecuta los scrapers corregidos.
+- **Historial**: errores de instalación previos a `scrape.ts` aparecen en Actions, pero no en `scraper_runs`.
+
+El scheduler del servidor Express local mantiene su frecuencia de cuatro horas;
+evita ejecutarlo simultáneamente con Actions sin coordinar las escrituras.
 
 #### Flujo completo de un cambio
 

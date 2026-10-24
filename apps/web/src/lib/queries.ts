@@ -20,6 +20,7 @@ export async function getPromos(filters?: {
     .from("promos")
     .select("*")
     .eq("is_active", true)
+    .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
     .order("expires_at", { ascending: true });
 
   if (filters?.categoryId) query = query.eq("category_id", filters.categoryId);
@@ -53,30 +54,15 @@ export async function getPromos(filters?: {
 }
 
 export async function getMetrics(): Promise<DashboardMetrics> {
-  const db = getServiceClient();
+  const promos = await getPromos();
   const oneWeekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-  const [{ count: total }, { data: bestDiscount }, { count: expiringThisWeek }] =
-    await Promise.all([
-      db.from("promos").select("*", { count: "exact", head: true }).eq("is_active", true),
-      db
-        .from("promos")
-        .select("discount_value")
-        .eq("is_active", true)
-        .eq("discount_type", "percentage")
-        .order("discount_value", { ascending: false })
-        .limit(1),
-      db
-        .from("promos")
-        .select("*", { count: "exact", head: true })
-        .eq("is_active", true)
-        .lte("expires_at", oneWeekFromNow.toISOString()),
-    ]);
+  const percentages = promos.filter((p) => p.discountType === "percentage" && Number.isFinite(parseFloat(p.discountValue)))
+    .sort((a, b) => parseFloat(b.discountValue) - parseFloat(a.discountValue));
 
   return {
-    totalActivePromos: total ?? 0,
-    bestDiscountToday: bestDiscount?.[0]?.discount_value ?? null,
-    expiringThisWeek: expiringThisWeek ?? 0,
+    totalActivePromos: promos.length,
+    bestDiscountToday: percentages[0]?.discountValue ?? null,
+    expiringThisWeek: promos.filter((p) => p.expiresAt && new Date(p.expiresAt) <= oneWeekFromNow).length,
   };
 }
 

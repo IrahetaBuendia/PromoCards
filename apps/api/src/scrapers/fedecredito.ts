@@ -13,9 +13,10 @@ const LIST_URL = "https://www.fedecredito.com.sv/promociones/todas";
 
 export async function fedecreditoScraper(): Promise<void> {
   const startedAt = new Date().toISOString();
-  const browser = await chromium.launch({ headless: true });
+  let browser: import("playwright").Browser | undefined;
 
   try {
+    browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     await page.goto(LIST_URL, { waitUntil: "domcontentloaded", timeout: 60_000 });
     await page.waitForSelector('a[href*="/promociones/ver/"]', { timeout: 15_000 });
@@ -90,6 +91,6 @@ export async function fedecreditoScraper(): Promise<void> {
     });
     throw error;
   } finally {
-    await browser.close();
+    await browser?.close();
   }
 }

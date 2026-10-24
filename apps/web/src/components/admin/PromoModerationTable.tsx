@@ -141,12 +141,13 @@ export function PromoModerationTable({ initialPromos }: Props) {
                 <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Descuento
                 </th>
+                <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-gray-400 text-sm">
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400 text-sm">
                     No hay promociones que coincidan con los filtros.
                   </td>
                 </tr>
@@ -172,6 +173,9 @@ export function PromoModerationTable({ initialPromos }: Props) {
                       ) : (
                         <span className="text-gray-300">—</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button type="button" onClick={() => setEditing(promo)} className="text-sm font-semibold text-indigo-600 hover:text-indigo-800">Editar</button>
                     </td>
                   </tr>
                 ))
