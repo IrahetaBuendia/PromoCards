@@ -21,15 +21,11 @@ const scrapers: Record<BankId, ScraperFn> = {
 export async function runAllScrapers(): Promise<void> {
   const bankIds = Object.keys(scrapers) as BankId[];
 
-  await Promise.allSettled(
-    bankIds.map(async (bankId) => {
-      try {
-        await scrapers[bankId]();
-      } catch (error) {
-        console.error(`[${bankId}] Error inesperado:`, error);
-      }
-    })
+  const results = await Promise.allSettled(bankIds.map((bankId) => scrapers[bankId]()));
+  const failures = results.flatMap((result, index) =>
+    result.status === "rejected" ? [`${bankIds[index]}: ${String(result.reason)}`] : []
   );
+  if (failures.length > 0) throw new Error(`Scrapers fallidos: ${failures.join("; ")}`);
 }
 
 export async function runScraper(bankId: BankId): Promise<void> {

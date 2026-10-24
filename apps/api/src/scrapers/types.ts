@@ -146,24 +146,20 @@ const MESES: Record<string, number> = {
 
 export function parseSpanishDate(text: string): string | null {
   if (!text) return null;
-
-  // Formato "30 de marzo de 2026" o "lunes 30 de marzo de 2026"
-  const longMatch = text.match(/(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/i);
-  if (longMatch) {
-    const day = parseInt(longMatch[1]);
-    const month = MESES[longMatch[2].toLowerCase()];
-    const year = parseInt(longMatch[3]);
-    if (month !== undefined) {
-      return new Date(Date.UTC(year, month, day, 12, 0, 0)).toISOString();
-    }
-  }
-
-  // Formato "30/03/2026" o "30-03-2026"
-  const shortMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-  if (shortMatch) {
-    const [, day, month, year] = shortMatch;
-    return new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0)).toISOString();
-  }
-
-  return null;
+  const candidates = [
+    ...Array.from(text.matchAll(/(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/gi), (m) => ({
+      index: m.index ?? 0, day: Number(m[1]), month: MESES[m[2].toLowerCase()], year: Number(m[3]),
+    })),
+    ...Array.from(text.matchAll(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g), (m) => ({
+      index: m.index ?? 0, day: Number(m[1]), month: Number(m[2]) - 1, year: Number(m[3]),
+    })),
+  ].sort((a, b) => b.index - a.index);
+  // En rangos "del ... al ...", la ultima fecha completa es el vencimiento.
+  const date = candidates[0];
+  if (!date || date.month === undefined) return null;
+  const { day, month, year } = date;
+  const utcDate = new Date(Date.UTC(year, month, day));
+  if (utcDate.getUTCFullYear() !== year || utcDate.getUTCMonth() !== month || utcDate.getUTCDate() !== day) return null;
+  // Vigente hasta el final del dia en El Salvador (UTC-6).
+  return new Date(Date.UTC(year, month, day + 1, 5, 59, 59, 999)).toISOString();
 }

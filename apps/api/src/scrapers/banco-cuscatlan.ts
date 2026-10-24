@@ -14,9 +14,10 @@ const LIST_URL = `${BASE_URL}/tarjetas/promociones`;
 
 export async function bancoCuscatlanScraper(): Promise<void> {
   const startedAt = new Date().toISOString();
-  const browser = await chromium.launch({ headless: true });
+  let browser: import("playwright").Browser | undefined;
 
   try {
+    browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     await page.setExtraHTTPHeaders({ "Accept-Language": "es-SV,es;q=0.9" });
 
@@ -109,11 +110,12 @@ export async function bancoCuscatlanScraper(): Promise<void> {
       bankId: BANK_ID,
       status: "error",
       promosFound: 0,
-      errorType: message.includes("timeout") ? "timeout" : "selector-broken",
+      errorType: /timeout/i.test(message) ? "timeout" : "selector-broken",
       errorMessage: message,
       startedAt,
     });
+    throw error;
   } finally {
-    await browser.close();
+    await browser?.close();
   }
 }

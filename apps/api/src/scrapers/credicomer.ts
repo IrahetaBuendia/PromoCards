@@ -15,9 +15,10 @@ const URL = `${BASE_URL}/personas/promociones`;
 
 export async function credicomerScraper(): Promise<void> {
   const startedAt = new Date().toISOString();
-  const browser = await chromium.launch({ headless: true });
+  let browser: import("playwright").Browser | undefined;
 
   try {
+    browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
 
     // Interceptar la respuesta del API interno de Credicomer para obtener datos completos
@@ -161,7 +162,7 @@ export async function credicomerScraper(): Promise<void> {
           return {
             title,
             description,
-            imageUrl: imgSrc ? `https://www.credicomer.com.sv${imgSrc}` : null,
+            imageUrl: imgSrc || null,
             sourceUrl: promoId
               ? `https://www.credicomer.com.sv/personas/promociones/${promoId}`
               : "https://www.credicomer.com.sv/personas/promociones",
@@ -205,11 +206,12 @@ export async function credicomerScraper(): Promise<void> {
       bankId: BANK_ID,
       status: "error",
       promosFound: 0,
-      errorType: message.includes("timeout") ? "timeout" : "selector-broken",
+      errorType: /timeout/i.test(message) ? "timeout" : "selector-broken",
       errorMessage: message,
       startedAt,
     });
+    throw error;
   } finally {
-    await browser.close();
+    await browser?.close();
   }
 }

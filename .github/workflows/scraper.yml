@@ -20,7 +20,7 @@ permissions:
 jobs:
   select-banks:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       banks: ${{ steps.select.outputs.banks }}
     steps:
@@ -45,7 +45,7 @@ jobs:
       fail-fast: false
       matrix:
         bank: ${{ fromJSON(needs.select-banks.outputs.banks) }}
-    runs-on: ${{ matrix.bank == 'fedecredito' && fromJSON('["promocards-fedecredito"]') || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.bank == 'fedecredito' && fromJSON('["promocards-fedecredito"]') || 'ubuntu-24.04' }}
     timeout-minutes: 20
     concurrency:
       group: scraper-${{ matrix.bank }}

@@ -64,7 +64,7 @@ adminRouter.post("/scrape", async (req, res) => {
       res.json({ message: `Scrape de ${bankId} completado` });
     } else {
       // Corre todos en background para no bloquear la respuesta
-      void runAllScrapers();
+      void runAllScrapers().catch((error) => console.error("[scrape] Error:", error));
       res.json({ message: "Scrape de todos los bancos iniciado" });
     }
   } catch (error) {

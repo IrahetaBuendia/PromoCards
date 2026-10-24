@@ -19,39 +19,34 @@ function getSupabase(): ReturnType<typeof createClient<any>> {
   return _supabase;
 }
 
-export async function deleteAllPromos(): Promise<void> {
-  const { error } = await getSupabase()
-    .from("promos")
-    .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000"); // condición siempre verdadera
-  if (error) console.warn(`[db] No se pudo limpiar la tabla: ${error.message}`);
-  else console.log("[db] Tabla promos limpiada");
-}
-
 export async function savePromos(promos: RawPromo[]): Promise<void> {
-  if (promos.length === 0) return;
+  if (promos.length === 0) throw new Error("El scraper no encontró promociones; se conservan los datos anteriores.");
 
   // Deduplicar por sourceUrl (incluye el ID único de la promo)
   // Esto permite que el mismo banco tenga promos con igual título pero diferente ID
   const seen = new Map<string, RawPromo>();
   for (const p of promos) {
-    const key = p.sourceUrl || `${p.bankId}::${p.title.toLowerCase().trim()}`;
+    if (!p.title.trim() || !p.sourceUrl) throw new Error("Promoción sin título o URL fuente.");
+    const key = `${p.bankId}::${p.sourceUrl}`;
     if (!seen.has(key)) seen.set(key, p);
   }
   const unique = Array.from(seen.values());
 
-  // Borrar promos anteriores de cada banco incluido en este batch
-  const bankIds = [...new Set(unique.map((p) => p.bankId))];
-  for (const bankId of bankIds) {
-    const { error: deleteError } = await getSupabase()
-      .from("promos")
-      .delete()
-      .eq("bank_id", bankId);
-    if (deleteError) console.warn(`[db] No se pudo limpiar ${bankId}: ${deleteError.message}`);
-    else console.log(`[db] Promos de ${bankId} eliminadas`);
+  if (process.env.SCRAPER_DRY_RUN === "true") {
+    console.log(`[dry-run] ${unique.length} promociones extraídas; no se escribe en Supabase`);
+    return;
   }
 
-  const { error } = await getSupabase().from("promos").insert(
+  // Identificar obsoletas antes de guardar, sin borrar datos si falla el upsert.
+  const bankIds = [...new Set(unique.map((p) => p.bankId))];
+  const { data: previous, error: readError } = await getSupabase()
+    .from("promos").select("id,bank_id,source_url").in("bank_id", bankIds);
+  if (readError) throw new Error(`Error consultando promos anteriores: ${readError.message}`);
+  const obsoleteIds = (previous ?? [])
+    .filter((p) => !seen.has(`${p.bank_id}::${p.source_url}`))
+    .map((p) => p.id);
+
+  const { error } = await getSupabase().from("promos").upsert(
     unique.map((p) => ({
       bank_id: p.bankId,
       title: p.title,
@@ -62,12 +57,18 @@ export async function savePromos(promos: RawPromo[]): Promise<void> {
       expires_at: p.expiresAt,
       image_url: p.imageUrl,
       source_url: p.sourceUrl,
-      is_active: true,
       updated_at: new Date().toISOString(),
-    }))
+    })),
+    { onConflict: "bank_id,source_url", defaultToNull: false }
   );
 
   if (error) throw new Error(`Error guardando promos: ${error.message}`);
+  // El upsert conserva los IDs y la moderación is_active de las promos existentes.
+  if (obsoleteIds.length > 0) {
+    const { error: cleanupError } = await getSupabase().from("promos")
+      .delete().in("id", obsoleteIds);
+    if (cleanupError) throw new Error(`Promos guardadas, pero falló la limpieza: ${cleanupError.message}`);
+  }
 }
 
 interface ScraperRunPayload {
@@ -80,6 +81,7 @@ interface ScraperRunPayload {
 }
 
 export async function logScraperRun(payload: ScraperRunPayload): Promise<void> {
+  if (process.env.SCRAPER_DRY_RUN === "true") return;
   const { error } = await getSupabase().from("scraper_runs").insert({
     bank_id: payload.bankId,
     status: payload.status,

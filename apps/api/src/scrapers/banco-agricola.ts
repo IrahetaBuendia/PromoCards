@@ -13,9 +13,10 @@ const URL = "https://www.bancoagricola.com/promociones";
 
 export async function bancoAgricolaScraper(): Promise<void> {
   const startedAt = new Date().toISOString();
-  const browser = await chromium.launch({ headless: true });
+  let browser: import("playwright").Browser | undefined;
 
   try {
+    browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     await page.setExtraHTTPHeaders({
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -86,11 +87,12 @@ export async function bancoAgricolaScraper(): Promise<void> {
       bankId: BANK_ID,
       status: "error",
       promosFound: 0,
-      errorType: message.includes("timeout") ? "timeout" : "selector-broken",
+      errorType: /timeout/i.test(message) ? "timeout" : "selector-broken",
       errorMessage: message,
       startedAt,
     });
+    throw error;
   } finally {
-    await browser.close();
+    await browser?.close();
   }
 }

@@ -10,6 +10,6 @@ export function startScheduler() {
 
   cron.schedule("0 */4 * * *", async () => {
     console.log(`[${new Date().toISOString()}] Iniciando scraping de todos los bancos...`);
-    await runAllScrapers();
+    await runAllScrapers().catch((error) => console.error("[scheduler] Error:", error));
   });
 }

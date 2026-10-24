@@ -13,7 +13,7 @@ export async function PATCH(
   const body = await request.json().catch(() => ({})) as {
     categoryId?: string;
     title?: string;
-    description?: string;
+    description?: string | null;
     isActive?: boolean;
   };
 

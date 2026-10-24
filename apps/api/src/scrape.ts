@@ -11,14 +11,15 @@ import dotenv from "dotenv";
 import { join } from "path";
 
 // En local carga el .env de la raíz; en GitHub Actions las vars vienen del workflow
-dotenv.config({ path: join(process.cwd(), "../../.env") });
+dotenv.config({ path: join(__dirname, "../../../.env") });
 
 import { runAllScrapers, runScraper } from "./scrapers";
-import { deleteAllPromos } from "./lib/db";
 import type { BankId } from "@promocards/types";
 
 // Acepta el banco como argumento CLI o como variable de entorno
-const bankId = (process.argv[2] ?? process.env.BANK_ID ?? "") as BankId | "";
+const args = process.argv.slice(2);
+if (args.includes("--dry-run")) process.env.SCRAPER_DRY_RUN = "true";
+const bankId = (args.find((arg) => arg !== "--dry-run") ?? process.env.BANK_ID ?? "") as BankId | "";
 
 async function main() {
   if (bankId) {
@@ -26,8 +27,6 @@ async function main() {
     await runScraper(bankId);
     console.log(`[scrape] ✓ ${bankId} completado`);
   } else {
-    console.log("[scrape] Limpiando tabla de promos…");
-    await deleteAllPromos();
     console.log("[scrape] Iniciando todos los scrapers…");
     await runAllScrapers();
     console.log("[scrape] ✓ Todos los scrapers completados");
