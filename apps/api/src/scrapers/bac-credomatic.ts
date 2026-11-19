@@ -7,13 +7,14 @@ import {
   type RawPromo,
 } from "./types";
 import { savePromos, logScraperRun } from "../lib/db";
+import { scrapeMiPromo } from "./bac-mipromo";
 
 const BANK_ID = "bac-credomatic" as const;
 const BASE_URL = "https://www.baccredomatic.com/es-sv/personas/promociones";
 const MAX_PAGES = 20; // límite de seguridad para evitar loops infinitos
 
 /** Extrae las promos visibles en la página actual */
-async function scrapePage(page: import("playwright").Page, pageUrl: string) {
+async function scrapePage(page: import("playwright").Page) {
   return page.$$eval(".promotion-wrapper-item", (wrappers) =>
     wrappers.map((wrapper) => {
       const card = wrapper.querySelector(".real-estate-card");
@@ -59,11 +60,12 @@ export async function bacCredomaticScraper(): Promise<void> {
       const pageUrl = `${BASE_URL}?page=${currentPage}`;
       console.log(`[${BANK_ID}] Scrapeando página ${currentPage}: ${pageUrl}`);
 
-      await page.goto(pageUrl, { waitUntil: "networkidle", timeout: 30_000 });
+      await page.goto(pageUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
       await page.waitForSelector(".real-estate-card", { timeout: 15_000 });
 
-      const items = await scrapePage(page, pageUrl);
+      const items = await scrapePage(page);
       const valid = items.filter((i): i is NonNullable<typeof i> => i !== null && i.title.length > 0);
+      if (valid.length === 0) throw new Error(`BAC no devolvió promociones en la página ${currentPage}`);
       allRawItems.push(...valid);
       console.log(`[${BANK_ID}] Página ${currentPage}: ${valid.length} promos`);
 
@@ -76,6 +78,7 @@ export async function bacCredomaticScraper(): Promise<void> {
 
       currentPage++;
     }
+    if (currentPage === MAX_PAGES) throw new Error("BAC excedió el límite de páginas");
 
     const rawPromos: RawPromo[] = allRawItems.map((item) => {
       const combined = `${item.title} ${item.description ?? ""}`;
@@ -91,6 +94,11 @@ export async function bacCredomaticScraper(): Promise<void> {
         sourceUrl: item.sourceUrl,
       } satisfies RawPromo;
     });
+
+    const miPromoPage = await browser.newPage();
+    const miPromoPromos = await scrapeMiPromo(miPromoPage);
+    console.log(`[${BANK_ID}] MiPromo El Salvador: ${miPromoPromos.length} promos`);
+    rawPromos.push(...miPromoPromos);
 
     await savePromos(rawPromos);
     await logScraperRun({
