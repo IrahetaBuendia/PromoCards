@@ -7,13 +7,17 @@ import type { CategoryId, BankId } from "@promocards/types";
 import { getServiceClient } from "./supabase/service";
 import type { AdminPromo, ScraperRun, ScraperTrigger } from "./admin-api";
 import type { Promo, DashboardMetrics } from "@promocards/types";
+import { searchPromos } from "./promo-search";
 
 // ─── Dashboard público ────────────────────────────────────────────────────────
 
-export async function getPromos(filters?: {
+export interface PromoFilters {
   categoryId?: CategoryId;
   bankId?: BankId;
-}): Promise<Promo[]> {
+  search?: string;
+}
+
+export async function getPromos(filters?: PromoFilters): Promise<Promo[]> {
   const db = getServiceClient();
 
   let query = db
@@ -30,7 +34,7 @@ export async function getPromos(filters?: {
   if (error) throw new Error(error.message);
 
   // Mapear snake_case de Supabase → camelCase del tipo Promo y ordenar por categoría fija
-  return (data ?? [])
+  const promos: Promo[] = (data ?? [])
     .sort(
       (a, b) =>
         (CATEGORY_ORDER[a.category_id as CategoryId] ?? 99) -
@@ -50,7 +54,9 @@ export async function getPromos(filters?: {
       isActive:      row.is_active,
       createdAt:     row.created_at,
       updatedAt:     row.updated_at,
-    })) as Promo[];
+    }));
+
+  return filters?.search ? searchPromos(promos, filters.search) : promos;
 }
 
 export async function getMetrics(): Promise<DashboardMetrics> {

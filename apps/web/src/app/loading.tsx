@@ -11,14 +11,10 @@ export default function Loading() {
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
-        {/* Métricas skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-2xl p-5 shadow-sm animate-pulse">
-              <div className="h-4 w-24 bg-gray-200 rounded mb-3" />
-              <div className="h-8 w-16 bg-gray-200 rounded" />
-            </div>
-          ))}
+        {/* Buscador skeleton */}
+        <div className="flex gap-2 animate-pulse">
+          <div className="h-11 flex-1 rounded-xl bg-gray-200" />
+          <div className="h-11 w-20 rounded-xl bg-gray-200" />
         </div>
 
         {/* Filtros skeleton */}
