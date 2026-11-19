@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
       categoryId: category ?? undefined,
       bankId: bank ?? undefined,
       search: searchParams.get("q") ?? undefined,
+      today: searchParams.get("today") === "1",
+      sort: searchParams.get("sort") === "expiry" ? "expiry" : undefined,
     });
     return NextResponse.json(promos, { headers: CORS_HEADERS });
   } catch (error) {

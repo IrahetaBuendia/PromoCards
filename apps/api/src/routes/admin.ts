@@ -1,7 +1,7 @@
 import { Router, type Request, type Response, type NextFunction, type IRouter } from "express";
 import { createClient } from "@supabase/supabase-js";
 import { runScraper, runAllScrapers } from "../scrapers";
-import type { BankId } from "@promocards/types";
+import { isPromoCardsAdmin, type BankId } from "@promocards/types";
 
 export const adminRouter: IRouter = Router();
 
@@ -16,7 +16,7 @@ function getSupabase(): ReturnType<typeof createClient<any>> {
 
 // ─── Middleware de autenticación ─────────────────────────────────────────────
 // Verifica el JWT de Supabase enviado en el header Authorization: Bearer <token>
-async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith("Bearer ")) {
@@ -33,11 +33,15 @@ async function requireAuth(req: Request, res: Response, next: NextFunction): Pro
     return;
   }
 
+  if (!isPromoCardsAdmin(user, process.env.PROMOCARDS_ADMIN_USER_IDS)) {
+    res.status(403).json({ error: "Se requiere el rol de administrador." });
+    return;
+  }
   next();
 }
 
 // Aplicar middleware a todas las rutas admin
-adminRouter.use(requireAuth);
+adminRouter.use(requireAdmin);
 
 // GET /api/admin/scraper-runs — historial de ejecuciones
 adminRouter.get("/scraper-runs", async (_req, res) => {

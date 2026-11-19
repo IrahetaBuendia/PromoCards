@@ -20,12 +20,18 @@ const searchResult = z.object({
         merchant_slug: z.string().min(1),
         slug: z.string().min(1),
         merchant_name: z.string().nullish(),
+        restrictions: z.string().nullish(),
         category_translation: z.string().nullish(),
         subcategory_translation: z.string().nullish(),
         description: z.string().nullish(),
         discount_percent_value: z.number().nullish(),
         discount_type_description: z.string().nullish(),
         validity_to: z.string().datetime().nullish(),
+        validity_from: z.string().datetime().nullish(),
+        coupons_validity_from: z.string().datetime().nullish(),
+        coupons_validity_to: z.string().datetime().nullish(),
+        deal_is_paid: z.boolean().nullish(),
+        deal_is_coupon: z.boolean().nullish(),
         deal_is_permanent: z.boolean(),
         _childDocuments_: z.object({
           IMAGE: z.array(z.object({
@@ -89,10 +95,10 @@ export async function scrapeMiPromo(page: Page): Promise<RawPromo[]> {
       template.content.querySelectorAll("br, p, li, div").forEach((element) => element.after(" "));
       return template.content.textContent?.replace(/\s+/g, " ").trim() || null;
     });
-  }, items.map((deal) => deal.description ?? ""));
+  }, items.flatMap((deal) => [deal.description ?? "", deal.restrictions ?? ""]));
 
   return items.map((deal, index) => {
-    const description = descriptions[index];
+    const description = descriptions[index * 2];
     const categoryText = [
       deal.title, deal.merchant_name, deal.category_translation, deal.subcategory_translation, description,
     ].join(" ");
@@ -115,6 +121,17 @@ export async function scrapeMiPromo(page: Page): Promise<RawPromo[]> {
         ? `${IMAGE_ORIGIN}${image.image_filepath.replace(/\/$/, "")}/${encodeURIComponent(image.image_filename)}`
         : null,
       sourceUrl: `${PORTAL_URL}/deal/${deal.id}/${encodeURIComponent(deal.merchant_slug)}/${encodeURIComponent(deal.slug)}`,
+      details: {
+        merchantName: deal.merchant_name || undefined,
+        startsAt: deal.validity_from ?? undefined,
+        permanent: deal.deal_is_permanent,
+        conditions: descriptions[index * 2 + 1] ?? undefined,
+        ...(deal.deal_is_coupon && {
+          requiresCoupon: deal.deal_is_paid ?? undefined,
+          redeemFrom: deal.coupons_validity_from ?? undefined,
+          redeemUntil: deal.coupons_validity_to ?? undefined,
+        }),
+      },
     };
   });
 }

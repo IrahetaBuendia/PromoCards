@@ -33,11 +33,26 @@ function AccordionSection({
   );
 }
 
+function Filters() {
+  return (
+    <>
+      <AccordionSection title="Categoría"><Suspense><CategoryFilter vertical /></Suspense></AccordionSection>
+      <AccordionSection title="Banco"><Suspense><BankFilter vertical /></Suspense></AccordionSection>
+      <AccordionSection title="Fecha"><Suspense><TodayFilter /></Suspense></AccordionSection>
+    </>
+  );
+}
+
 export function FilterSidebar() {
   const [open, setOpen] = useState(true);
 
   return (
-    <div className="relative shrink-0 self-start sticky top-20">
+    <div className="w-full shrink-0 md:w-auto md:self-start md:sticky md:top-20">
+      <details className="rounded-xl border border-gray-200 bg-white md:hidden">
+        <summary className="cursor-pointer px-4 py-2.5 text-sm font-semibold">Filtros</summary>
+        <Filters />
+      </details>
+      <div className="hidden md:block">
       {open ? (
         <aside className="w-52 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {/* Header */}
@@ -55,17 +70,7 @@ export function FilterSidebar() {
           </div>
 
           <div className="overflow-y-auto max-h-[calc(100vh-8rem)]">
-            <AccordionSection title="Categoría" defaultOpen>
-              <Suspense><CategoryFilter vertical /></Suspense>
-            </AccordionSection>
-
-            <AccordionSection title="Banco" defaultOpen>
-              <Suspense><BankFilter vertical /></Suspense>
-            </AccordionSection>
-
-            <AccordionSection title="Fecha" defaultOpen>
-              <Suspense><TodayFilter /></Suspense>
-            </AccordionSection>
+            <Filters />
           </div>
         </aside>
       ) : (
@@ -82,6 +87,7 @@ export function FilterSidebar() {
           </span>
         </button>
       )}
+      </div>
     </div>
   );
 }

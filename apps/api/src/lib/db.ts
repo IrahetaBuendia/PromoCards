@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { createClient } from "@supabase/supabase-js";
-import type { BankId, ScraperErrorType, ScraperStatus } from "@promocards/types";
+import { getPromoDetails, type BankId, type ScraperErrorType, type ScraperStatus } from "@promocards/types";
 import type { RawPromo } from "../scrapers/types";
 
 // Cliente lazy: se crea la primera vez que se usa, cuando dotenv ya cargó las vars
@@ -57,6 +57,7 @@ export async function savePromos(promos: RawPromo[]): Promise<void> {
       expires_at: p.expiresAt,
       image_url: p.imageUrl,
       source_url: p.sourceUrl,
+      promo_details: getPromoDetails(p),
       updated_at: new Date().toISOString(),
     })),
     { onConflict: "bank_id,source_url", defaultToNull: false }
@@ -82,6 +83,7 @@ interface ScraperRunPayload {
 
 export async function logScraperRun(payload: ScraperRunPayload): Promise<void> {
   if (process.env.SCRAPER_DRY_RUN === "true") return;
+  const workflowJobUrl = payload.status === "error" ? await getWorkflowJobUrl(payload.bankId) : null;
   const { error } = await getSupabase().from("scraper_runs").insert({
     bank_id: payload.bankId,
     status: payload.status,
@@ -90,7 +92,28 @@ export async function logScraperRun(payload: ScraperRunPayload): Promise<void> {
     error_message: payload.errorMessage,
     started_at: payload.startedAt,
     finished_at: new Date().toISOString(),
+    workflow_job_url: workflowJobUrl,
   });
 
   if (error) console.error("Error registrando scraper run:", error.message);
+}
+
+async function getWorkflowJobUrl(bankId: BankId): Promise<string | null> {
+  const { GITHUB_SERVER_URL, GITHUB_API_URL, GITHUB_REPOSITORY, GITHUB_RUN_ID, GITHUB_RUN_ATTEMPT, GH_TOKEN } = process.env;
+  if (!GITHUB_SERVER_URL || !GITHUB_REPOSITORY || !GITHUB_RUN_ID) return null;
+  const runUrl = `${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}`;
+  if (!GH_TOKEN || !GITHUB_API_URL || !GITHUB_RUN_ATTEMPT) return runUrl;
+
+  try {
+    const response = await fetch(
+      `${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}/jobs`,
+      { headers: { Authorization: `Bearer ${GH_TOKEN}` }, signal: AbortSignal.timeout(5_000) },
+    );
+    if (!response.ok) return runUrl;
+    const { jobs } = await response.json() as { jobs: Array<{ id: number; name: string }> };
+    const job = jobs.find((entry) => entry.name === `Scraper ${bankId}`);
+    return job ? `${runUrl}/job/${job.id}` : runUrl;
+  } catch {
+    return runUrl;
+  }
 }

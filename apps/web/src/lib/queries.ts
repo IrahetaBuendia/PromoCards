@@ -2,7 +2,7 @@
  * Funciones de consulta a Supabase — usadas tanto por Server Components
  * como por Route Handlers. Solo corren en el servidor.
  */
-import { CATEGORY_ORDER } from "@promocards/types";
+import { CATEGORY_ORDER, getPromoDetails, inferExtraCategory, isPromoValidToday } from "@promocards/types";
 import type { CategoryId, BankId } from "@promocards/types";
 import { getServiceClient } from "./supabase/service";
 import type { AdminPromo, ScraperRun, ScraperTrigger } from "./admin-api";
@@ -15,48 +15,87 @@ export interface PromoFilters {
   categoryId?: CategoryId;
   bankId?: BankId;
   search?: string;
+  today?: boolean;
+  sort?: "expiry" | "relevance";
 }
 
-export async function getPromos(filters?: PromoFilters): Promise<Promo[]> {
-  const db = getServiceClient();
-
-  let query = db
+function activePromosQuery() {
+  return getServiceClient()
     .from("promos")
     .select("*")
     .eq("is_active", true)
     .or(`expires_at.is.null,expires_at.gte.${new Date().toISOString()}`)
     .order("expires_at", { ascending: true });
+}
 
-  if (filters?.categoryId) query = query.eq("category_id", filters.categoryId);
+function mapPromo(row: Record<string, any>): Promo {
+  const category = row.category_id === "otros"
+    ? inferExtraCategory(`${row.title} ${row.description ?? ""}`) ?? "otros"
+    : row.category_id;
+  const promo: Promo = {
+    id: row.id,
+    bankId: row.bank_id,
+    title: row.title,
+    description: row.description,
+    categoryId: category,
+    discountType: row.discount_type,
+    discountValue: row.discount_value,
+    expiresAt: row.expires_at,
+    imageUrl: row.image_url,
+    sourceUrl: row.source_url,
+    isActive: row.is_active,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    details: row.promo_details ?? undefined,
+  };
+  return { ...promo, details: getPromoDetails(promo) };
+}
+
+export async function getPromo(id: string): Promise<Promo | null> {
+  if (!/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id)) return null;
+  const { data, error } = await activePromosQuery().eq("id", id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? mapPromo(data) : null;
+}
+
+export async function getPromos(filters?: PromoFilters): Promise<Promo[]> {
+  let query = activePromosQuery();
+
+  const category = filters?.categoryId;
+  if (category === "belleza" || category === "salud" || category === "regalos") {
+    query = query.in("category_id", [category, "otros"]);
+  } else if (category) {
+    query = query.eq("category_id", category);
+  }
   if (filters?.bankId) query = query.eq("bank_id", filters.bankId);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  // Mapear snake_case de Supabase → camelCase del tipo Promo y ordenar por categoría fija
-  const promos: Promo[] = (data ?? [])
-    .sort(
-      (a, b) =>
-        (CATEGORY_ORDER[a.category_id as CategoryId] ?? 99) -
-        (CATEGORY_ORDER[b.category_id as CategoryId] ?? 99)
-    )
-    .map((row) => ({
-      id:            row.id,
-      bankId:        row.bank_id,
-      title:         row.title,
-      description:   row.description,
-      categoryId:    row.category_id,
-      discountType:  row.discount_type,
-      discountValue: row.discount_value,
-      expiresAt:     row.expires_at,
-      imageUrl:      row.image_url,
-      sourceUrl:     row.source_url,
-      isActive:      row.is_active,
-      createdAt:     row.created_at,
-      updatedAt:     row.updated_at,
-    }));
+  let promos = (data ?? []).map(mapPromo);
+  if (category) promos = promos.filter((promo) => promo.categoryId === category);
+  if (filters?.today) promos = promos.filter((promo) => isPromoValidToday(promo));
+  if (filters?.sort !== "expiry") {
+    promos.sort((a, b) => (CATEGORY_ORDER[a.categoryId] ?? 99) - (CATEGORY_ORDER[b.categoryId] ?? 99));
+  }
+  if (filters?.search) promos = searchPromos(promos, filters.search);
+  if (filters?.sort === "expiry") {
+    const expiry = (promo: Promo) => promo.expiresAt ? Date.parse(promo.expiresAt) : Infinity;
+    promos.sort((a, b) => expiry(a) - expiry(b));
+  }
+  return promos;
+}
 
-  return filters?.search ? searchPromos(promos, filters.search) : promos;
+export async function getBankUpdates(): Promise<Partial<Record<BankId, string>>> {
+  const { data, error } = await getServiceClient().from("scraper_runs")
+    .select("bank_id,started_at,finished_at")
+    .eq("status", "success")
+    .order("started_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(error.message);
+  const updates: Partial<Record<BankId, string>> = {};
+  for (const row of data ?? []) updates[row.bank_id as BankId] ??= row.finished_at ?? row.started_at;
+  return updates;
 }
 
 export async function getMetrics(): Promise<DashboardMetrics> {

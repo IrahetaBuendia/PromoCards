@@ -3,19 +3,9 @@
 import { useState } from "react";
 import { moderatePromo } from "@/lib/admin-api";
 import type { AdminPromo } from "@/lib/admin-api";
-import type { CategoryId } from "@promocards/types";
+import { CATEGORY_LABELS, CATEGORY_ORDER, type CategoryId } from "@promocards/types";
 
-const CATEGORIES: { id: CategoryId; label: string }[] = [
-  { id: "gasolina", label: "⛽ Gasolina" },
-  { id: "supermercados", label: "🛒 Supermercados" },
-  { id: "farmacias", label: "💊 Farmacias" },
-  { id: "restaurantes", label: "🍽️ Restaurantes" },
-  { id: "almacenes", label: "🏪 Almacenes" },
-  { id: "repuestos-talleres", label: "🔧 Repuestos y Talleres" },
-  { id: "ferreterias", label: "🔨 Ferreterías" },
-  { id: "streaming", label: "🎬 Streaming" },
-  { id: "otros", label: "📦 Otros" },
-];
+const CATEGORIES = (Object.keys(CATEGORY_ORDER) as CategoryId[]).map((id) => ({ id, label: CATEGORY_LABELS[id] }));
 
 interface Props {
   promo: AdminPromo;

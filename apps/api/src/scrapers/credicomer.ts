@@ -91,6 +91,7 @@ export async function credicomerScraper(): Promise<void> {
           const imageUrl = promoId
             ? `${BASE_URL}/api/promotions/${promoId}/image`
             : null;
+          const merchant = item.store ?? item.comercio;
 
           // Texto para categorización: combinar todos los campos de texto disponibles
           const categoryName =
@@ -126,6 +127,7 @@ export async function credicomerScraper(): Promise<void> {
             sourceUrl: promoId
               ? `${BASE_URL}/personas/promociones/${promoId}`
               : URL,
+            details: { merchantName: typeof merchant === "string" ? merchant.trim() || undefined : undefined },
           };
         });
 

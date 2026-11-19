@@ -1,25 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { BANK_NAMES, CATEGORY_ICONS, daysToPromoExpiry } from "@promocards/types";
 import type { Promo, CategoryId } from "@promocards/types";
 
 // Categorías prioritarias para alertas
 const PRIORITY_CATEGORIES: CategoryId[] = ["gasolina", "supermercados", "farmacias"];
 
-const CATEGORY_ICONS: Record<CategoryId, string> = {
-  gasolina: "⛽", supermercados: "🛒", farmacias: "💊",
-  restaurantes: "🍽️", almacenes: "🏬", "repuestos-talleres": "🔧",
-  ferreterias: "🔨", streaming: "🎬", otros: "📦",
-};
 
-const BANK_NAMES: Record<string, string> = {
-  "fedecredito": "Fedecrédito",
-  "banco-industrial": "Banco Industrial",
-  "credicomer": "Credicomer",
-  "bac-credomatic": "BAC Credomatic",
-  "credisiman": "Credisiman",
-  "banco-agricola": "Banco Agrícola",
-};
 
 interface Props {
   promos: Promo[];
@@ -32,11 +20,11 @@ export function AlertBanner({ promos }: Props) {
     if (!p.expiresAt) return false;
     if (!PRIORITY_CATEGORIES.includes(p.categoryId)) return false;
     if (dismissed.has(p.id)) return false;
-    const days = Math.ceil((new Date(p.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    const days = daysToPromoExpiry(p.expiresAt);
     return days >= 0 && days <= 7;
   }).sort((a, b) => {
-    const daysA = Math.ceil((new Date(a.expiresAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    const daysB = Math.ceil((new Date(b.expiresAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    const daysA = daysToPromoExpiry(a.expiresAt!);
+    const daysB = daysToPromoExpiry(b.expiresAt!);
     return daysA - daysB;
   });
 
@@ -52,7 +40,7 @@ export function AlertBanner({ promos }: Props) {
       </div>
 
       {alerts.map((promo) => {
-        const days = Math.ceil((new Date(promo.expiresAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        const days = daysToPromoExpiry(promo.expiresAt!);
         const icon = CATEGORY_ICONS[promo.categoryId];
         const bankName = BANK_NAMES[promo.bankId] ?? promo.bankId;
         const urgency = days <= 1 ? "text-red-700 bg-red-100" : days <= 3 ? "text-orange-700 bg-orange-100" : "text-amber-700 bg-amber-100";

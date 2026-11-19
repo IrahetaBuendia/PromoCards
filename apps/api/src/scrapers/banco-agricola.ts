@@ -66,6 +66,7 @@ export async function bancoAgricolaScraper(): Promise<void> {
               expiresAt: parseSpanishDate(item.rawText),
               imageUrl: item.imageUrl,
               sourceUrl: item.sourceUrl,
+              details: { merchantName: item.store || undefined },
             } satisfies RawPromo;
           })
       );

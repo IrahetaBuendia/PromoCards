@@ -1,5 +1,6 @@
 import type { BankId, CategoryId } from "./types";
 import { CATEGORY_ORDER } from "./types";
+export { CATEGORY_ICONS, CATEGORY_LABELS } from "./types";
 
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ?? "https://tu-dominio.vercel.app";
@@ -22,30 +23,6 @@ export const BANK_NAMES: Record<BankId, string> = {
   credisiman: "Credisiman",
   "banco-agricola": "Banco Agrícola",
   "banco-cuscatlan": "Banco Cuscatlán",
-};
-
-export const CATEGORY_LABELS: Record<CategoryId, string> = {
-  gasolina: "Gasolina",
-  supermercados: "Supermercados",
-  farmacias: "Farmacias",
-  restaurantes: "Restaurantes",
-  almacenes: "Almacenes",
-  "repuestos-talleres": "Repuestos",
-  ferreterias: "Ferreterías",
-  streaming: "Streaming",
-  otros: "Otros",
-};
-
-export const CATEGORY_ICONS: Record<CategoryId, string> = {
-  gasolina: "⛽",
-  supermercados: "🛒",
-  farmacias: "💊",
-  restaurantes: "🍽️",
-  almacenes: "🏬",
-  "repuestos-talleres": "🔧",
-  ferreterias: "🪛",
-  streaming: "📺",
-  otros: "🏷️",
 };
 
 export const SORTED_CATEGORIES = (

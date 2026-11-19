@@ -146,6 +146,12 @@ create table if not exists scraper_triggers (
 
 ## Instalación y ejecución local
 
+Ejecuta también la [migración de detalles, enlaces y permisos](supabase/migrations/202611190001_promo_details_and_scraper_links.sql) en Supabase. Agrega columnas opcionales y conserva las promociones existentes. Las escrituras y el historial de los scrapers quedan reservados a la API con permisos de servidor.
+
+Configura `PROMOCARDS_ADMIN_USER_IDS` con los IDs de Supabase Auth de los administradores, separados por coma, en Vercel y en la API Express si se utiliza. También se admite `app_metadata.role = "admin"` asignado desde el servidor de Supabase. El panel requiere uno de estos permisos.
+
+Los favoritos y las tarjetas se guardan en el navegador o en el dispositivo Android. En la web, el recordatorio se importa al calendario. En Android, el recordatorio usa notificaciones locales y requiere una compilación que incluya el módulo nativo.
+
 ### 1. Clonar e instalar dependencias
 
 ```bash

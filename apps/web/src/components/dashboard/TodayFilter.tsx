@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { getDayInElSalvador } from "@promocards/types";
 
 export function TodayFilter() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export function TodayFilter() {
 
   // Nombre del día hoy en español
   const days = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-  const todayName = days[new Date().getDay()];
+  const todayName = days[getDayInElSalvador()];
 
   return (
     <button

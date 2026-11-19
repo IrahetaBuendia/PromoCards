@@ -1,233 +1,110 @@
-import { useEffect } from "react";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useQuery } from "@tanstack/react-query";
-import { fetchPromos } from "../../lib/api";
-import { BANK_COLORS, BANK_NAMES, CATEGORY_ICONS, CATEGORY_LABELS } from "../../lib/constants";
+import { fetchPromo } from "../../lib/api";
+import { API_BASE_URL, BANK_COLORS, BANK_NAMES, CATEGORY_LABELS } from "../../lib/constants";
+import { promoTerms } from "../../lib/types";
+import { usePromoPreferences } from "../../lib/preferences";
+import { cancelPromoReminder, hasPromoReminder, schedulePromoReminder } from "../../lib/reminders";
 
 export default function PromoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
-
-  // Busca la promo en el caché de TanStack Query (ya cargada en la lista)
-  const { data: promos, isLoading } = useQuery({
-    queryKey: ["promos", null, null],
-    queryFn: () => fetchPromos(),
-    staleTime: 5 * 60 * 1000,
+  const { favorites, toggleFavorite } = usePromoPreferences();
+  const [savingReminder, setSavingReminder] = useState(false);
+  const { data: promo, isLoading, isError, refetch } = useQuery({
+    queryKey: ["promo", id],
+    queryFn: () => fetchPromo(id),
+    enabled: Boolean(id),
+  });
+  const { data: reminder, refetch: refreshReminder } = useQuery({
+    queryKey: ["promo-reminder", id],
+    queryFn: () => hasPromoReminder(id),
+    enabled: Boolean(id) && Platform.OS === "android",
   });
 
-  const promo = promos?.find((p) => p.id === id);
-
   useEffect(() => {
-    if (promo) {
-      navigation.setOptions({ title: BANK_NAMES[promo.bankId] });
-    }
+    if (promo) navigation.setOptions({ title: BANK_NAMES[promo.bankId] });
   }, [promo, navigation]);
 
-  if (isLoading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#2563eb" />
-      </View>
-    );
-  }
-
-  if (!promo) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>Promo no encontrada.</Text>
-      </View>
-    );
-  }
+  if (isLoading) return <View style={styles.center}><ActivityIndicator color="#2563eb" /></View>;
+  if (!promo || isError) return <View style={styles.center}>
+    <Text>{isError ? "No se pudo cargar la promoción." : "Promoción no disponible."}</Text>
+    {isError && <Action label="Reintentar" onPress={() => void refetch()} />}
+  </View>;
 
   const bankColor = BANK_COLORS[promo.bankId];
+  const canRemind = Boolean(promo.expiresAt && Date.parse(promo.expiresAt) > Date.now() + 3_600_000);
+  const directUrl = API_BASE_URL + "/promo/" + encodeURIComponent(id);
 
-  const expiresAt = promo.expiresAt
-    ? new Date(promo.expiresAt).toLocaleDateString("es-SV", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    : null;
+  async function toggleReminder() {
+    if (!promo) return;
+    setSavingReminder(true);
+    try {
+      if (reminder) await cancelPromoReminder(id);
+      else await schedulePromoReminder(promo);
+      await refreshReminder();
+      Alert.alert(reminder ? "Recordatorio cancelado" : "Recordatorio programado");
+    } catch (error) {
+      Alert.alert(error instanceof Error ? error.message : "No se pudo guardar el recordatorio.");
+    } finally {
+      setSavingReminder(false);
+    }
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {promo.imageUrl ? (
-        <Image
-          source={{ uri: promo.imageUrl }}
-          style={styles.image}
-          contentFit="cover"
-        />
-      ) : (
-        <View style={[styles.imagePlaceholder, { backgroundColor: bankColor }]}>
-          <Text style={styles.placeholderText}>
-            {BANK_NAMES[promo.bankId].charAt(0)}
-          </Text>
-        </View>
-      )}
-
-      <View style={styles.body}>
-        <View style={styles.badgeRow}>
-          <View style={[styles.bankBadge, { backgroundColor: bankColor }]}>
-            <Text style={styles.bankBadgeText}>{BANK_NAMES[promo.bankId]}</Text>
-          </View>
-          <Text style={styles.category}>
-            {CATEGORY_ICONS[promo.categoryId]} {CATEGORY_LABELS[promo.categoryId]}
-          </Text>
-        </View>
-
-        <Text style={styles.title}>{promo.title}</Text>
-
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountLabel}>Descuento</Text>
-          <Text style={styles.discountValue}>{promo.discountValue}</Text>
-        </View>
-
-        {promo.description && (
-          <Text style={styles.description}>{promo.description}</Text>
-        )}
-
-        {expiresAt && (
-          <View style={styles.expireRow}>
-            <Text style={styles.expireIcon}>⏰</Text>
-            <Text style={styles.expireText}>Vence el {expiresAt}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={[styles.ctaButton, { backgroundColor: bankColor }]}
-          onPress={() => WebBrowser.openBrowserAsync(promo.sourceUrl)}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.ctaText}>Ver promo en el banco →</Text>
-        </TouchableOpacity>
-      </View>
+      <Text style={styles.subtitle}>{BANK_NAMES[promo.bankId]} · {CATEGORY_LABELS[promo.categoryId]}</Text>
+      <Text style={styles.title}>{promo.title}</Text>
+      {promo.details?.merchantName && <Text style={styles.subtitle}>{promo.details.merchantName}</Text>}
+      {promo.imageUrl && <Image source={{ uri: promo.imageUrl }} style={styles.image} contentFit="contain" />}
+      {Boolean(promo.discountValue) && <Text style={styles.discount}>{promo.discountValue}</Text>}
+      {promo.description && <Text style={styles.description}>{promo.description}</Text>}
+      {promoTerms(promo).map(({ label, value }) => <View key={label} style={styles.term}>
+        <Text style={styles.termLabel}>{label}</Text>
+        <Text style={styles.description}>{value}</Text>
+      </View>)}
+      {promo.details?.conditions && <View style={styles.term}>
+        <Text style={styles.termLabel}>Condiciones de la fuente</Text>
+        <Text style={styles.description}>{promo.details.conditions}</Text>
+      </View>}
+      {promo.sourceUrl && <Action label="Ver oferta original" color={bankColor} onPress={() => {
+        void WebBrowser.openBrowserAsync(promo.sourceUrl).catch(() => Alert.alert("No se pudo abrir la fuente"));
+      }} />}
+      <Action label={favorites.includes(id) ? "Quitar de favoritos" : "Guardar en favoritos"} onPress={() => {
+        void toggleFavorite(id).catch(() => Alert.alert("No se pudo guardar el favorito"));
+      }} />
+      {Platform.OS === "android" && (canRemind || reminder) && <Action
+        label={reminder ? "Cancelar recordatorio" : "Recordarme antes de que venza"}
+        disabled={savingReminder} onPress={() => void toggleReminder()} />}
+      <Action label="Compartir promoción" onPress={() => {
+        void Share.share({ message: promo.title + "\n" + directUrl }).catch(() => Alert.alert("No se pudo compartir"));
+      }} />
     </ScrollView>
   );
 }
 
+function Action({ label, onPress, disabled, color }: { label: string; onPress: () => void; disabled?: boolean; color?: string }) {
+  return <Pressable accessibilityRole="button" onPress={onPress} disabled={disabled}
+    style={[styles.action, color && { backgroundColor: color }]}>
+    <Text style={[styles.actionText, color && { color: "#fff" }]}>{label}</Text>
+  </Pressable>;
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f1f5f9",
-  },
-  content: {
-    paddingBottom: 40,
-  },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 32,
-  },
-  errorText: {
-    fontSize: 16,
-    color: "#dc2626",
-  },
-  image: {
-    width: "100%",
-    height: 220,
-  },
-  imagePlaceholder: {
-    width: "100%",
-    height: 220,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  placeholderText: {
-    fontSize: 72,
-    color: "#fff",
-    fontWeight: "700",
-  },
-  body: {
-    padding: 20,
-    gap: 16,
-  },
-  badgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  bankBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  bankBadgeText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  category: {
-    fontSize: 13,
-    color: "#666",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#111",
-    lineHeight: 28,
-  },
-  discountBadge: {
-    backgroundColor: "#f0fdf4",
-    borderRadius: 10,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#bbf7d0",
-    alignItems: "center",
-  },
-  discountLabel: {
-    fontSize: 12,
-    color: "#166534",
-    fontWeight: "500",
-  },
-  discountValue: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#15803d",
-  },
-  description: {
-    fontSize: 14,
-    color: "#374151",
-    lineHeight: 22,
-  },
-  expireRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#fefce8",
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#fde68a",
-  },
-  expireIcon: {
-    fontSize: 16,
-  },
-  expireText: {
-    fontSize: 13,
-    color: "#92400e",
-    fontWeight: "500",
-  },
-  ctaButton: {
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    marginTop: 4,
-  },
-  ctaText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  container: { flex: 1, backgroundColor: "#f8fafc" },
+  content: { padding: 20, paddingBottom: 40, gap: 12 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
+  title: { fontSize: 22, fontWeight: "700", color: "#0f172a" },
+  subtitle: { fontSize: 14, color: "#475569", fontWeight: "600" },
+  image: { width: "100%", height: 220, borderRadius: 12, backgroundColor: "#e2e8f0" },
+  discount: { fontSize: 18, fontWeight: "700", color: "#047857" },
+  description: { fontSize: 14, color: "#334155", lineHeight: 21 },
+  term: { borderRadius: 10, backgroundColor: "#e8eef6", padding: 12, gap: 4 },
+  termLabel: { color: "#0f172a", fontWeight: "700" },
+  action: { minHeight: 44, alignItems: "center", justifyContent: "center", padding: 10, borderRadius: 10, borderWidth: 1, borderColor: "#cbd5e1", backgroundColor: "#fff" },
+  actionText: { fontWeight: "600", color: "#1e293b" },
 });

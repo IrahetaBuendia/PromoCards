@@ -1,5 +1,5 @@
 import { Fuel, ShoppingCart, Pill, UtensilsCrossed, Store, Wrench, Hammer, Tv, Package } from "lucide-react";
-import type { Promo, BankId, CategoryId } from "@promocards/types";
+import { CATEGORY_LABELS, formatPromoDate, type Promo, type BankId, type CategoryId } from "@promocards/types";
 
 const BANK_CONFIG: Record<BankId, { name: string; color: string; headerText: string; badgeBg: string; badgeText: string }> = {
   "fedecredito":      { name: "Fedecrédito",     color: "#31825b", headerText: "#ffffff", badgeBg: "#dcfce7", badgeText: "#14532d" },
@@ -13,7 +13,7 @@ const BANK_CONFIG: Record<BankId, { name: string; color: string; headerText: str
 
 type CategoryIconComponent = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string; style?: React.CSSProperties }>;
 
-const CATEGORY_ICON_COMPONENTS: Record<CategoryId, CategoryIconComponent> = {
+const CATEGORY_ICON_COMPONENTS: Partial<Record<CategoryId, CategoryIconComponent>> = {
   gasolina:           Fuel,
   supermercados:      ShoppingCart,
   farmacias:          Pill,
@@ -25,20 +25,8 @@ const CATEGORY_ICON_COMPONENTS: Record<CategoryId, CategoryIconComponent> = {
   otros:              Package,
 };
 
-const CATEGORY_LABELS: Record<CategoryId, string> = {
-  gasolina:           "Gasolina",
-  supermercados:      "Supermercados",
-  farmacias:          "Farmacias",
-  restaurantes:       "Restaurantes",
-  almacenes:          "Almacenes",
-  "repuestos-talleres": "Repuestos y Talleres",
-  ferreterias:        "Ferreterías",
-  streaming:          "Streaming",
-  otros:              "Otros",
-};
-
 // Fondo e ícono coloridos para el placeholder cuando no hay imagen
-const CATEGORY_PLACEHOLDER: Record<CategoryId, { bg: string; iconColor: string }> = {
+const CATEGORY_PLACEHOLDER: Partial<Record<CategoryId, { bg: string; iconColor: string }>> = {
   gasolina:           { bg: "#fff7ed", iconColor: "#ea580c" },
   supermercados:      { bg: "#f0fdf4", iconColor: "#16a34a" },
   farmacias:          { bg: "#eff6ff", iconColor: "#2563eb" },
@@ -58,16 +46,12 @@ export function PromoCard({ promo }: Props) {
   const bank = BANK_CONFIG[promo.bankId];
   const CategoryIcon = CATEGORY_ICON_COMPONENTS[promo.categoryId] ?? Package;
   const categoryLabel = CATEGORY_LABELS[promo.categoryId] ?? "Otros";
-  const placeholder = CATEGORY_PLACEHOLDER[promo.categoryId] ?? CATEGORY_PLACEHOLDER.otros;
+  const placeholder = CATEGORY_PLACEHOLDER[promo.categoryId] ?? CATEGORY_PLACEHOLDER.otros!;
   const bankColor = bank?.color ?? "#9ca3af";
   const bankHeaderText = bank?.headerText ?? "#ffffff";
 
   const expiresDate = promo.expiresAt
-    ? new Date(promo.expiresAt).toLocaleDateString("es-SV", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
+    ? formatPromoDate(promo.expiresAt)
     : null;
 
   const isExpiringSoon = promo.expiresAt
@@ -109,6 +93,7 @@ export function PromoCard({ promo }: Props) {
         <h3 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-3 flex-1">
           {promo.title}
         </h3>
+        {promo.details?.merchantName && <p className="truncate text-xs text-gray-600">{promo.details.merchantName}</p>}
 
         {/* Footer: categoría izq · banco der */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-50 gap-1">
@@ -125,7 +110,6 @@ export function PromoCard({ promo }: Props) {
         </div>
 
         {/* Vencimiento si aplica */}
-        {expiresDate && (
           <div className="flex justify-end">
             <span
               className="text-xs font-semibold px-2 py-0.5 rounded-full"
@@ -133,10 +117,10 @@ export function PromoCard({ promo }: Props) {
                 ? { backgroundColor: "#fee2e2", color: "#dc2626" }
                 : { backgroundColor: "#f3f4f6", color: "#6b7280" }}
             >
-              {isExpiringSoon ? "⚠️ " : ""}Vence {expiresDate}
+              {expiresDate ? `${isExpiringSoon ? "⚠️ " : ""}Vence ${expiresDate}` :
+                promo.details?.permanent ? "Permanente" : "Vigencia sin confirmar"}
             </span>
           </div>
-        )}
       </div>
     </div>
   );

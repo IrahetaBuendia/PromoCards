@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { EditPromoModal } from "./EditPromoModal";
 import type { AdminPromo } from "@/lib/admin-api";
+import { CATEGORY_LABELS } from "@promocards/types";
 import type { BankId, CategoryId } from "@promocards/types";
 
 const BANK_NAMES: Record<BankId, string> = {
@@ -15,17 +16,6 @@ const BANK_NAMES: Record<BankId, string> = {
   "banco-cuscatlan": "Banco Cuscatlán",
 };
 
-const CATEGORY_LABELS: Record<CategoryId, string> = {
-  gasolina:             "⛽ Gasolina",
-  supermercados:        "🛒 Supermercados",
-  farmacias:            "💊 Farmacias",
-  restaurantes:         "🍽️ Restaurantes",
-  almacenes:            "🏬 Almacenes",
-  "repuestos-talleres": "🔧 Repuestos y Talleres",
-  ferreterias:          "🔨 Ferreterías",
-  streaming:            "🎬 Streaming",
-  otros:                "📦 Otros",
-};
 
 const ALL_BANKS: Array<{ value: string; label: string }> = [
   { value: "", label: "Todos los bancos" },

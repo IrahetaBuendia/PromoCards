@@ -212,6 +212,7 @@ export async function credisimanScraper(): Promise<void> {
             sourceUrl: item.id
               ? `${LIST_URL}#${item.id}`
               : `${LIST_URL}#${slug}`,
+            details: { merchantName: typeof item.store === "string" ? item.store.trim() || undefined : undefined },
           };
         });
 

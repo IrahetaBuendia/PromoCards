@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 // Rutas públicas que no requieren autenticación
-const PUBLIC_PATHS = ["/login", "/auth/callback", "/api/promos"];
+const PUBLIC_PATHS = ["/login", "/auth/callback", "/api/promos", "/promo"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -38,10 +38,13 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   // Sin sesión y ruta protegida → redirigir a login
   if (!user && !isPublic) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
