@@ -2,21 +2,19 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { LayoutGrid, Fuel, ShoppingCart, Pill, UtensilsCrossed, Store, Wrench, Hammer, Tv, Package } from "lucide-react";
-import type { CategoryId } from "@promocards/types";
+import { CATEGORY_LABELS, CATEGORY_ORDER, type CategoryId } from "@promocards/types";
 
 type IconComponent = React.ComponentType<{ size?: number; strokeWidth?: number }>;
 
-const CATEGORIES: Array<{ id: CategoryId | "todas"; label: string; Icon: IconComponent }> = [
-  { id: "todas",               label: "Todas",                Icon: LayoutGrid },
-  { id: "gasolina",            label: "Gasolina",             Icon: Fuel },
-  { id: "supermercados",       label: "Supermercados",        Icon: ShoppingCart },
-  { id: "farmacias",           label: "Farmacias",            Icon: Pill },
-  { id: "restaurantes",        label: "Restaurantes",         Icon: UtensilsCrossed },
-  { id: "almacenes",           label: "Almacenes",            Icon: Store },
-  { id: "repuestos-talleres",  label: "Repuestos y Talleres", Icon: Wrench },
-  { id: "ferreterias",         label: "Ferreterías",          Icon: Hammer },
-  { id: "streaming",           label: "Streaming",            Icon: Tv },
-  { id: "otros",               label: "Otros",                Icon: Package },
+const CATEGORY_ICONS: Partial<Record<CategoryId, IconComponent>> = {
+  gasolina: Fuel, supermercados: ShoppingCart, farmacias: Pill, restaurantes: UtensilsCrossed,
+  almacenes: Store, "repuestos-talleres": Wrench, ferreterias: Hammer, streaming: Tv,
+};
+const CATEGORIES = [
+  { id: "todas", label: "Todas", Icon: LayoutGrid },
+  ...(Object.keys(CATEGORY_ORDER) as CategoryId[]).map((id) => ({
+    id, label: CATEGORY_LABELS[id], Icon: CATEGORY_ICONS[id] ?? Package,
+  })),
 ];
 
 export function CategoryFilter({ vertical = false }: { vertical?: boolean }) {

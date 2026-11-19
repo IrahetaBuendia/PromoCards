@@ -1,8 +1,12 @@
 import { getAdminPromosFromDB } from "@/lib/queries";
 import { PromoModerationTable } from "@/components/admin/PromoModerationTable";
 import type { AdminPromo } from "@/lib/admin-api";
+import { requireAdmin } from "@/lib/supabase/auth-guard";
+import { redirect } from "next/navigation";
 
 export default async function AdminPromosPage() {
+  const auth = await requireAdmin();
+  if (!auth.authorized) redirect(auth.response.status === 401 ? "/login" : "/");
   let promos: AdminPromo[] = [];
 
   try {

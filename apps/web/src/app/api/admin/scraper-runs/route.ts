@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/supabase/auth-guard";
+import { requireAdmin } from "@/lib/supabase/auth-guard";
 import { getScraperRunsFromDB } from "@/lib/queries";
 
 export async function GET() {
-  const auth = await requireAuth();
+  const auth = await requireAdmin();
   if (!auth.authorized) return auth.response;
 
   try {

@@ -1,4 +1,4 @@
-import type { BankId, CategoryId, DiscountType } from "@promocards/types";
+import { inferExtraCategory, type BankId, type CategoryId, type DiscountType, type PromoDetails } from "@promocards/types";
 
 export type ScraperFn = () => Promise<void>;
 
@@ -15,6 +15,7 @@ export interface RawPromo {
   expiresAt: string | null;
   imageUrl: string | null;
   sourceUrl: string;
+  details?: PromoDetails;
 }
 
 /**
@@ -115,7 +116,7 @@ export function detectCategory(text: string): CategoryId {
       return categoryId;
     }
   }
-  return "otros";
+  return inferExtraCategory(text) ?? "otros";
 }
 
 export function detectDiscountType(text: string): DiscountType {

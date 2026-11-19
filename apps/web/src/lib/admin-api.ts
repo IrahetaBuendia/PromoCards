@@ -30,6 +30,7 @@ export interface ScraperRun {
   promos_found: number;
   error_type: string | null;
   error_message: string | null;
+  workflow_job_url?: string | null;
   started_at: string;
   finished_at: string | null;
 }

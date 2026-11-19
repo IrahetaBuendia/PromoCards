@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/supabase/auth-guard";
+import { requireAdmin } from "@/lib/supabase/auth-guard";
 import { moderatePromoDB } from "@/lib/queries";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAuth();
+  const auth = await requireAdmin();
   if (!auth.authorized) return auth.response;
 
   const { id } = await params;

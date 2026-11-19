@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/supabase/auth-guard";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
 
 export default async function AdminLayout({
@@ -17,6 +18,7 @@ export default async function AdminLayout({
   if (!user) {
     redirect("/login");
   }
+  if (!isAdmin(user)) redirect("/");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">

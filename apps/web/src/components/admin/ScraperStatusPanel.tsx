@@ -25,6 +25,7 @@ const ALL_BANKS: BankId[] = [
 interface Props {
   latestRuns: Partial<Record<BankId, ScraperRun>>;
   latestTriggers: Partial<Record<string, ScraperTrigger>>;
+  updates: Partial<Record<BankId, string>>;
 }
 
 function timeAgo(dateStr: string): string {
@@ -65,7 +66,7 @@ function StatusBadge({ status }: { status: ScraperRun["status"] | "never" }) {
   );
 }
 
-export function ScraperStatusPanel({ latestRuns, latestTriggers }: Props) {
+export function ScraperStatusPanel({ latestRuns, latestTriggers, updates }: Props) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       {/* Header */}
@@ -92,7 +93,7 @@ export function ScraperStatusPanel({ latestRuns, latestTriggers }: Props) {
                 Promos
               </th>
               <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Último scrape
+                Última actualización exitosa
               </th>
               <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
                 Error
@@ -106,10 +107,8 @@ export function ScraperStatusPanel({ latestRuns, latestTriggers }: Props) {
           <tbody className="divide-y divide-gray-50">
             {ALL_BANKS.map((bankId) => {
               const run = latestRuns[bankId];
-              const isStale =
-                run
-                  ? Date.now() - new Date(run.started_at).getTime() > 6 * 60 * 60 * 1000
-                  : true;
+              const lastSuccess = updates[bankId];
+              const isStale = !lastSuccess || Date.now() - Date.parse(lastSuccess) > 24 * 60 * 60 * 1000;
 
               const trigger = latestTriggers[bankId] ?? latestTriggers["all"];
 
@@ -118,7 +117,7 @@ export function ScraperStatusPanel({ latestRuns, latestTriggers }: Props) {
                   <td className="px-6 py-4 font-semibold text-gray-900 whitespace-nowrap">
                     {BANK_NAMES[bankId]}
                     {isStale && (
-                      <span className="ml-2 text-xs text-amber-600 font-normal">⚠ &gt;6h</span>
+                      <span className="ml-2 text-xs text-amber-700 font-normal">{lastSuccess ? "Datos atrasados" : "Sin verificar"}</span>
                     )}
                   </td>
                   <td className="px-4 py-4">
@@ -128,7 +127,7 @@ export function ScraperStatusPanel({ latestRuns, latestTriggers }: Props) {
                     {run ? run.promos_found : "—"}
                   </td>
                   <td className="px-4 py-4 text-gray-500 whitespace-nowrap">
-                    {run ? timeAgo(run.started_at) : "—"}
+                    {lastSuccess ? timeAgo(lastSuccess) : "—"}
                   </td>
                   <td className="px-4 py-4 max-w-xs">
                     {run?.error_message ? (
@@ -138,6 +137,11 @@ export function ScraperStatusPanel({ latestRuns, latestTriggers }: Props) {
                       </span>
                     ) : (
                       <span className="text-gray-300">—</span>
+                    )}
+                    {run?.workflow_job_url?.startsWith("https://github.com/") && (
+                      <a href={run.workflow_job_url} target="_blank" rel="noreferrer" className="text-xs text-indigo-700 underline">
+                        Ver ejecución en GitHub
+                      </a>
                     )}
                   </td>
                   <td className="px-4 py-4 max-w-[160px]">

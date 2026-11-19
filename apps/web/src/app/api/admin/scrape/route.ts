@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/supabase/auth-guard";
+import { requireAdmin } from "@/lib/supabase/auth-guard";
 import { createClient } from "@/lib/supabase/server";
 import { logScraperTrigger } from "@/lib/queries";
 import type { BankId } from "@promocards/types";
@@ -9,7 +9,7 @@ import type { BankId } from "@promocards/types";
  * Requiere las variables de entorno: GITHUB_PAT, GITHUB_OWNER, GITHUB_REPO.
  */
 export async function POST(request: NextRequest) {
-  const auth = await requireAuth();
+  const auth = await requireAdmin();
   if (!auth.authorized) return auth.response;
 
   const body = await request.json().catch(() => ({})) as { bankId?: BankId };

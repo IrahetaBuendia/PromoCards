@@ -2,6 +2,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Image } from "expo-image";
 import type { Promo } from "../lib/types";
 import { BANK_COLORS, BANK_NAMES, CATEGORY_ICONS, CATEGORY_LABELS } from "../lib/constants";
+import { formatPromoDate } from "../lib/types";
 
 interface PromoCardProps {
   promo: Promo;
@@ -10,13 +11,7 @@ interface PromoCardProps {
 
 export function PromoCard({ promo, onPress }: PromoCardProps) {
   const bankColor = BANK_COLORS[promo.bankId];
-  const expiresAt = promo.expiresAt
-    ? new Date(promo.expiresAt).toLocaleDateString("es-SV", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : null;
+  const expiresAt = promo.expiresAt ? formatPromoDate(promo.expiresAt) : null;
 
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(promo)} activeOpacity={0.85}>
@@ -46,14 +41,14 @@ export function PromoCard({ promo, onPress }: PromoCardProps) {
         </View>
 
         <Text style={styles.title} numberOfLines={2}>{promo.title}</Text>
+        {promo.details?.merchantName && <Text style={styles.category}>{promo.details.merchantName}</Text>}
 
         <View style={styles.footer}>
-          <View style={styles.discountBadge}>
+          {Boolean(promo.discountValue) && <View style={styles.discountBadge}>
             <Text style={styles.discountText}>{promo.discountValue}</Text>
-          </View>
-          {expiresAt && (
-            <Text style={styles.expires}>Vence: {expiresAt}</Text>
-          )}
+          </View>}
+          <Text style={styles.expires}>{expiresAt ? `Vence: ${expiresAt}` :
+            promo.details?.permanent ? "Permanente" : "Vigencia sin confirmar"}</Text>
         </View>
       </View>
     </TouchableOpacity>

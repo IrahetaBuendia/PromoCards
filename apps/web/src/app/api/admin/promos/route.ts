@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/supabase/auth-guard";
+import { requireAdmin } from "@/lib/supabase/auth-guard";
 import { getAdminPromosFromDB } from "@/lib/queries";
 import type { BankId } from "@promocards/types";
 
 export async function GET(request: NextRequest) {
-  const auth = await requireAuth();
+  const auth = await requireAdmin();
   if (!auth.authorized) return auth.response;
 
   const { searchParams } = new URL(request.url);
