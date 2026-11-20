@@ -186,7 +186,11 @@ pnpm dev
 
 ### 5. Correr scrapers manualmente en local
 
+Compila el paquete compartido después de instalar las dependencias y cada vez que cambie `packages/types`. Los scrapers cargan sus funciones desde `dist/index.js`.
+
 ```bash
+pnpm --filter @promocards/types build
+
 # Todos los bancos
 pnpm --filter @promocards/api exec tsx src/scrape.ts
 
@@ -341,12 +345,14 @@ El repositorio tiene tres workflows:
 - **Disparo automático**: cron `0 0,13,18 * * *` (UTC) = **7am, 12pm y 6pm hora El Salvador (UTC-6)**
 - **Disparo manual**: desde GitHub UI (Actions → Scrapers → Run workflow) o desde el panel admin de la app
 - **Input opcional**: `bank_id` para scrapear solo un banco (dejar vacío = todos los 7)
-- **Qué hace**: instala Playwright + Chromium → corre `scrape.ts` → guarda en Supabase
+- **Qué hace**: instala dependencias con el lockfile, compila `@promocards/types`, instala Chromium y ejecuta `scrape.ts` para actualizar Supabase.
 - **Runners**: seis bancos usan Ubuntu 24.04; Fedecrédito usa el runner Windows con etiqueta `promocards-fedecredito`, que debe permanecer conectado.
 - **Compatibilidad**: Ubuntu está fijado explícitamente porque la versión instalada de Playwright falla con Chromium en Ubuntu 26.04; no cambiar a `ubuntu-latest` sin verificarlo.
 - **Aislamiento**: un job por banco, sin cancelar los demás si alguno falla, y con concurrencia limitada por banco.
 - **Rama**: el workflow de scraping solo ejecuta sus jobs en `main`. Subir cambios a `develop` no actualiza producción ni ejecuta los scrapers corregidos.
-- **Historial**: errores de instalación previos a `scrape.ts` aparecen en Actions, pero no en `scraper_runs`.
+- **Historial**: los errores de checkout, instalación o compilación aparecen en Actions. El historial de Supabase (`scraper_runs`) se registra cuando el scraper llega a ejecutarse.
+
+Cuando una corrección llega a `main`, inicia una ejecución nueva con `gh workflow run scraper.yml --ref main`. Volver a ejecutar un job fallido usa el commit de su ejecución original.
 
 El scheduler del servidor Express local mantiene su frecuencia de cuatro horas;
 evita ejecutarlo simultáneamente con Actions sin coordinar las escrituras.
