@@ -78,6 +78,9 @@ jobs:
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
+      - name: Compilar paquete compartido
+        run: pnpm --filter @promocards/types build
+
       - name: Instalar Chromium (Playwright)
         run: pnpm --filter @promocards/api exec playwright install --with-deps chromium
 
